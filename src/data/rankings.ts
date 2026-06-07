@@ -1,0 +1,69 @@
+export interface PowerRanking {
+  rank: number;
+  heroId: string;
+  name: string;
+  alias: string;
+  level: number;
+  power: number;
+  guildTag?: string;
+  avatar: string;
+}
+
+export interface TaskRanking {
+  rank: number;
+  heroId: string;
+  name: string;
+  alias: string;
+  completedTasks: number;
+  completionRate: number;
+  avatar: string;
+}
+
+export interface ContributionRanking {
+  rank: number;
+  heroId: string;
+  name: string;
+  alias: string;
+  contribution: number;
+  district: string;
+  avatar: string;
+}
+
+export const powerRankings: PowerRanking[] = [
+  { rank: 1, heroId: 'h-001', name: '王磊', alias: '磐石', level: 18, power: 12000, guildTag: 'TTN', avatar: '🧔' },
+  { rank: 2, heroId: 'h-002', name: '马超', alias: '战狂', level: 16, power: 9500, guildTag: 'TTN', avatar: '💂' },
+  { rank: 3, heroId: 'h-003', name: '陈光明', alias: '曙光', level: 15, power: 8500, guildTag: 'JLA', avatar: '🦸' },
+  { rank: 4, heroId: 'h-004', name: '赵勇', alias: '铁拳', level: 14, power: 7800, guildTag: 'JLA', avatar: '👨‍🦱' },
+  { rank: 5, heroId: 'h-005', name: '林雪', alias: '幽影', level: 12, power: 7200, guildTag: 'PHM', avatar: '🦸‍♀️' },
+  { rank: 6, heroId: 'h-006', name: '吴风', alias: '夜行', level: 10, power: 4800, guildTag: 'PHM', avatar: '🥷' },
+  { rank: 7, heroId: 'h-007', name: '何刚', alias: '巨像', level: 13, power: 6800, guildTag: 'TTN', avatar: '🧑‍🦲' },
+  { rank: 8, heroId: 'h-008', name: '孙丽', alias: '星尘', level: 11, power: 5200, guildTag: 'JLA', avatar: '👩‍🦰' },
+  { rank: 9, heroId: 'h-009', name: '郑雪', alias: '银狐', level: 9, power: 4100, guildTag: 'PHM', avatar: '👩' },
+  { rank: 10, heroId: 'h-010', name: '周杰', alias: '闪电', level: 8, power: 3200, guildTag: 'JLA', avatar: '🧑' },
+];
+
+export const taskRankings: TaskRanking[] = [
+  { rank: 1, heroId: 'h-003', name: '陈光明', alias: '曙光', completedTasks: 285, completionRate: 98.2, avatar: '🦸' },
+  { rank: 2, heroId: 'h-005', name: '林雪', alias: '幽影', completedTasks: 240, completionRate: 96.7, avatar: '🦸‍♀️' },
+  { rank: 3, heroId: 'h-002', name: '马超', alias: '战狂', completedTasks: 310, completionRate: 94.5, avatar: '💂' },
+  { rank: 4, heroId: 'h-004', name: '赵勇', alias: '铁拳', completedTasks: 198, completionRate: 95.9, avatar: '👨‍🦱' },
+  { rank: 5, heroId: 'h-001', name: '王磊', alias: '磐石', completedTasks: 350, completionRate: 92.0, avatar: '🧔' },
+  { rank: 6, heroId: 'h-008', name: '孙丽', alias: '星尘', completedTasks: 156, completionRate: 97.4, avatar: '👩‍🦰' },
+  { rank: 7, heroId: 'h-006', name: '吴风', alias: '夜行', completedTasks: 175, completionRate: 93.1, avatar: '🥷' },
+  { rank: 8, heroId: 'h-007', name: '何刚', alias: '巨像', completedTasks: 220, completionRate: 90.9, avatar: '🧑‍🦲' },
+  { rank: 9, heroId: 'h-009', name: '郑雪', alias: '银狐', completedTasks: 132, completionRate: 94.7, avatar: '👩' },
+  { rank: 10, heroId: 'h-010', name: '周杰', alias: '闪电', completedTasks: 88, completionRate: 95.5, avatar: '🧑' },
+];
+
+export const contributionRankings: ContributionRanking[] = [
+  { rank: 1, heroId: 'h-001', name: '王磊', alias: '磐石', contribution: 15800, district: '工业区', avatar: '🧔' },
+  { rank: 2, heroId: 'h-003', name: '陈光明', alias: '曙光', contribution: 14200, district: '金融区', avatar: '🦸' },
+  { rank: 3, heroId: 'h-005', name: '林雪', alias: '幽影', contribution: 11500, district: '住宅区', avatar: '🦸‍♀️' },
+  { rank: 4, heroId: 'h-002', name: '马超', alias: '战狂', contribution: 10800, district: '工业区', avatar: '💂' },
+  { rank: 5, heroId: 'h-004', name: '赵勇', alias: '铁拳', contribution: 9600, district: '金融区', avatar: '👨‍🦱' },
+  { rank: 6, heroId: 'h-007', name: '何刚', alias: '巨像', contribution: 8200, district: '工业区', avatar: '🧑‍🦲' },
+  { rank: 7, heroId: 'h-008', name: '孙丽', alias: '星尘', contribution: 7500, district: '住宅区', avatar: '👩‍🦰' },
+  { rank: 8, heroId: 'h-006', name: '吴风', alias: '夜行', contribution: 6800, district: '住宅区', avatar: '🥷' },
+  { rank: 9, heroId: 'h-009', name: '郑雪', alias: '银狐', contribution: 5400, district: '金融区', avatar: '👩' },
+  { rank: 10, heroId: 'h-010', name: '周杰', alias: '闪电', contribution: 3200, district: '住宅区', avatar: '🧑' },
+];
