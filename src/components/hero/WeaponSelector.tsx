@@ -1,13 +1,14 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Swords, Target, Zap, Shield, Gauge, Flame, Sparkles } from 'lucide-react';
-import { weapons, type Weapon, type WeaponType, type Rarity } from '@/data/heroes';
+import { weapons as defaultWeapons, type Weapon, type WeaponType, type Rarity } from '@/data/heroes';
 import { TechCard, RarityBadge } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 interface WeaponSelectorProps {
   selectedId: string | null;
   onChange: (id: string) => void;
+  weapons?: Weapon[];
 }
 
 const typeConfig: Record<WeaponType, { label: string; icon: typeof Swords; color: string }> = {
@@ -47,12 +48,13 @@ const getCriticalChance = (weapon: Weapon): number => {
   return Math.round(baseByType[weapon.type] * rarityMultiplier[weapon.rarity]);
 };
 
-export function WeaponSelector({ selectedId, onChange }: WeaponSelectorProps) {
+export function WeaponSelector({ selectedId, onChange, weapons }: WeaponSelectorProps) {
   const [typeFilter, setTypeFilter] = useState<WeaponType | 'all'>('all');
   const [rarityFilter, setRarityFilter] = useState<Rarity | 'all'>('all');
+  const weaponList = weapons ?? defaultWeapons;
 
   const filteredWeapons = useMemo(() => {
-    return weapons.filter((w) => {
+    return weaponList.filter((w) => {
       if (typeFilter !== 'all' && w.type !== typeFilter) return false;
       if (rarityFilter !== 'all' && w.rarity !== rarityFilter) return false;
       return true;

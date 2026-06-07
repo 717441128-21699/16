@@ -1,0 +1,118 @@
+[
+  {
+    "id": "history",
+    "data": {
+      "financial-district": [
+        {
+          "date": "06-01",
+          "crimeRate": 42,
+          "satisfaction": 68
+        },
+        {
+          "date": "06-02",
+          "crimeRate": 38,
+          "satisfaction": 71
+        },
+        {
+          "date": "06-03",
+          "crimeRate": 45,
+          "satisfaction": 65
+        },
+        {
+          "date": "06-04",
+          "crimeRate": 35,
+          "satisfaction": 74
+        },
+        {
+          "date": "06-05",
+          "crimeRate": 40,
+          "satisfaction": 70
+        },
+        {
+          "date": "06-06",
+          "crimeRate": 33,
+          "satisfaction": 76
+        },
+        {
+          "date": "06-07",
+          "crimeRate": 38,
+          "satisfaction": 72
+        }
+      ],
+      "industrial-district": [
+        {
+          "date": "06-01",
+          "crimeRate": 42,
+          "satisfaction": 68
+        },
+        {
+          "date": "06-02",
+          "crimeRate": 38,
+          "satisfaction": 71
+        },
+        {
+          "date": "06-03",
+          "crimeRate": 45,
+          "satisfaction": 65
+        },
+        {
+          "date": "06-04",
+          "crimeRate": 35,
+          "satisfaction": 74
+        },
+        {
+          "date": "06-05",
+          "crimeRate": 40,
+          "satisfaction": 70
+        },
+        {
+          "date": "06-06",
+          "crimeRate": 33,
+          "satisfaction": 76
+        },
+        {
+          "date": "06-07",
+          "crimeRate": 38,
+          "satisfaction": 72
+        }
+      ],
+      "residential-district": [
+        {
+          "date": "06-01",
+          "crimeRate": 42,
+          "satisfaction": 68
+        },
+        {
+          "date": "06-02",
+          "crimeRate": 38,
+          "satisfaction": 71
+        },
+        {
+          "date": "06-03",
+          "crimeRate": 45,
+          "satisfaction": 65
+        },
+        {
+          "date": "06-04",
+          "crimeRate": 35,
+          "satisfaction": 74
+        },
+        {
+          "date": "06-05",
+          "crimeRate": 40,
+          "satisfaction": 70
+        },
+        {
+          "date": "06-06",
+          "crimeRate": 33,
+          "satisfaction": 76
+        },
+        {
+          "date": "06-07",
+          "crimeRate": 38,
+          "satisfaction": 72
+        }
+      ]
+    }
+  }
+]

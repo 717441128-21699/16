@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -15,6 +15,7 @@ import {
   Clock,
   RefreshCw,
   Plus,
+  Loader2,
 } from 'lucide-react';
 import { HeroStats } from '@/components/hero/HeroStats';
 import { HeroCard } from '@/components/hero/HeroCard';
@@ -23,7 +24,8 @@ import { SuitSelector } from '@/components/hero/SuitSelector';
 import { WeaponSelector } from '@/components/hero/WeaponSelector';
 import { TechCard, GlowButton, StatCard, ProgressBar, RarityBadge } from '@/components/ui';
 import { useHeroStore } from '@/store/useHeroStore';
-import { suits, weapons } from '@/data/heroes';
+import { api } from '@/lib/api';
+import { type Suit, type Weapon } from '@/data/heroes';
 import { cn } from '@/lib/utils';
 import { AppLayout } from '@/components/layout';
 
@@ -90,12 +92,35 @@ const defaultSkills: SkillInfo[] = [
 
 function HeroManagePage() {
   const navigate = useNavigate();
-  const { heroList, currentHero, updateHero, addExp } = useHeroStore();
+  const { heroList, currentHero, updateHeroAsync, addExpAsync, fetchHeroes, loading: storeLoading } = useHeroStore();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [showSuitSelector, setShowSuitSelector] = useState(false);
   const [showWeaponSelector, setShowWeaponSelector] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [suits, setSuits] = useState<Suit[]>([]);
+  const [weapons, setWeapons] = useState<Weapon[]>([]);
+  const [updating, setUpdating] = useState(false);
 
   const hero = currentHero ?? heroList[0];
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await fetchHeroes();
+        const [suitsData, weaponsData] = await Promise.all([
+          api.getSuits(),
+          api.getWeapons(),
+        ]);
+        setSuits(suitsData as Suit[]);
+        setWeapons(weaponsData as Weapon[]);
+      } catch (error) {
+        console.error('加载数据失败:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [fetchHeroes]);
 
   const computedStats = useMemo<HeroStatsData>(() => {
     if (!hero) {
@@ -113,6 +138,19 @@ function HeroManagePage() {
       cooldownReduction: Math.min(cooldownReduction, 100),
     };
   }, [hero]);
+
+  if (loading || storeLoading) {
+    return (
+      <AppLayout>
+        <div className="min-h-screen flex items-center justify-center p-8">
+          <div className="flex flex-col items-center">
+            <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mb-4" />
+            <p className="text-scifi-muted">加载中...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!hero) {
     return (
@@ -143,18 +181,32 @@ function HeroManagePage() {
     { id: 'skills', label: '技能', icon: Sparkles },
   ];
 
-  const handleSuitChange = (suitId: string) => {
-    updateHero(hero.id, { suitId });
-    setShowSuitSelector(false);
+  const handleSuitChange = async (suitId: string) => {
+    setUpdating(true);
+    try {
+      await updateHeroAsync(hero.id, { suitId });
+      setShowSuitSelector(false);
+    } catch (error) {
+      console.error('更新战衣失败:', error);
+    } finally {
+      setUpdating(false);
+    }
   };
 
-  const handleWeaponChange = (weaponId: string) => {
-    updateHero(hero.id, { weaponId });
-    setShowWeaponSelector(false);
+  const handleWeaponChange = async (weaponId: string) => {
+    setUpdating(true);
+    try {
+      await updateHeroAsync(hero.id, { weaponId });
+      setShowWeaponSelector(false);
+    } catch (error) {
+      console.error('更新武器失败:', error);
+    } finally {
+      setUpdating(false);
+    }
   };
 
-  const handleAddExp = () => {
-    addExp(hero.id, 500);
+  const handleAddExp = async () => {
+    await addExpAsync(hero.id, 500);
   };
 
   const expPercent = (hero.exp / hero.maxExp) * 100;
@@ -305,6 +357,11 @@ function HeroManagePage() {
               transition={{ duration: 0.3 }}
               className="space-y-6"
             >
+              {updating && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                  <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+                </div>
+              )}
               {showSuitSelector ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -313,7 +370,7 @@ function HeroManagePage() {
                       取消
                     </GlowButton>
                   </div>
-                  <SuitSelector selectedId={hero.suitId} onChange={handleSuitChange} />
+                  <SuitSelector selectedId={hero.suitId} onChange={handleSuitChange} suits={suits} />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -391,6 +448,11 @@ function HeroManagePage() {
               transition={{ duration: 0.3 }}
               className="space-y-6"
             >
+              {updating && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                  <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+                </div>
+              )}
               {showWeaponSelector ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -399,7 +461,7 @@ function HeroManagePage() {
                       取消
                     </GlowButton>
                   </div>
-                  <WeaponSelector selectedId={hero.weaponId} onChange={handleWeaponChange} />
+                  <WeaponSelector selectedId={hero.weaponId} onChange={handleWeaponChange} weapons={weapons} />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

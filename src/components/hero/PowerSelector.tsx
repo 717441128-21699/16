@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Shield, Wind, Clock, Check } from 'lucide-react';
-import { superPowers, type SuperPower } from '@/data/heroes';
+import { superPowers as defaultSuperPowers, type SuperPower } from '@/data/heroes';
 import { TechCard } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -9,6 +9,7 @@ interface PowerSelectorProps {
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   maxSelect?: number;
+  powers?: SuperPower[];
 }
 
 const statIcons = {
@@ -17,7 +18,8 @@ const statIcons = {
   cooldown: Clock,
 };
 
-export function PowerSelector({ selectedIds, onChange, maxSelect = 3 }: PowerSelectorProps) {
+export function PowerSelector({ selectedIds, onChange, maxSelect = 3, powers }: PowerSelectorProps) {
+  const superPowers = powers ?? defaultSuperPowers;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const getStatBonus = (power: SuperPower) => {

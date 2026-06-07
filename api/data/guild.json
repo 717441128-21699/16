@@ -1,0 +1,220 @@
+[
+  {
+    "id": "guild-justice",
+    "name": "正义联盟",
+    "level": 8,
+    "presidentId": "hero-1",
+    "vicePresidentIds": [
+      "hero-4"
+    ],
+    "members": [
+      {
+        "heroId": "hero-1",
+        "heroName": "陈光明",
+        "role": "president",
+        "joinDate": 1765249375049,
+        "contribution": 128500
+      },
+      {
+        "heroId": "hero-4",
+        "heroName": "赵勇",
+        "role": "vice",
+        "joinDate": 1767841375049,
+        "contribution": 89200
+      },
+      {
+        "heroId": "hero-5",
+        "heroName": "孙丽",
+        "role": "member",
+        "joinDate": 1775617375049,
+        "contribution": 35600
+      },
+      {
+        "heroId": "hero-6",
+        "heroName": "周杰",
+        "role": "member",
+        "joinDate": 1780196575049,
+        "contribution": 4200
+      }
+    ],
+    "buildings": [
+      {
+        "id": "training-room",
+        "name": "训练室",
+        "type": "training",
+        "level": 3,
+        "maxLevel": 10,
+        "description": "供公会成员进行战斗训练的场所",
+        "effect": "成员获得经验值+15%",
+        "upgradeCost": 50000,
+        "icon": "🏋️"
+      },
+      {
+        "id": "intelligence-center",
+        "name": "情报中心",
+        "type": "intelligence",
+        "level": 2,
+        "maxLevel": 10,
+        "description": "收集和分析城市各处的情报",
+        "effect": "随机事件奖励+10%",
+        "upgradeCost": 80000,
+        "icon": "📡"
+      },
+      {
+        "id": "armory",
+        "name": "武器库",
+        "type": "armory",
+        "level": 4,
+        "maxLevel": 10,
+        "description": "存放和维护公会武器装备的地方",
+        "effect": "装备耐久度消耗-20%",
+        "upgradeCost": 120000,
+        "icon": "⚔️"
+      }
+    ],
+    "controlledDistricts": [
+      "financial-district"
+    ],
+    "totalPower": 24700
+  },
+  {
+    "id": "guild-phantom",
+    "name": "暗夜兄弟会",
+    "level": 6,
+    "presidentId": "hero-2",
+    "vicePresidentIds": [
+      "hero-7"
+    ],
+    "members": [
+      {
+        "heroId": "hero-2",
+        "heroName": "林雪",
+        "role": "president",
+        "joinDate": 1770433375049,
+        "contribution": 95800
+      },
+      {
+        "heroId": "hero-7",
+        "heroName": "吴风",
+        "role": "vice",
+        "joinDate": 1773025375049,
+        "contribution": 52300
+      },
+      {
+        "heroId": "hero-8",
+        "heroName": "郑雪",
+        "role": "member",
+        "joinDate": 1776913375049,
+        "contribution": 21500
+      }
+    ],
+    "buildings": [
+      {
+        "id": "training-room",
+        "name": "训练室",
+        "type": "training",
+        "level": 2,
+        "maxLevel": 10,
+        "description": "供公会成员进行战斗训练的场所",
+        "effect": "成员获得经验值+15%",
+        "upgradeCost": 50000,
+        "icon": "🏋️"
+      },
+      {
+        "id": "intelligence-center",
+        "name": "情报中心",
+        "type": "intelligence",
+        "level": 5,
+        "maxLevel": 10,
+        "description": "收集和分析城市各处的情报",
+        "effect": "随机事件奖励+10%",
+        "upgradeCost": 80000,
+        "icon": "📡"
+      },
+      {
+        "id": "armory",
+        "name": "武器库",
+        "type": "armory",
+        "level": 2,
+        "maxLevel": 10,
+        "description": "存放和维护公会武器装备的地方",
+        "effect": "装备耐久度消耗-20%",
+        "upgradeCost": 120000,
+        "icon": "⚔️"
+      }
+    ],
+    "controlledDistricts": [],
+    "totalPower": 16100
+  },
+  {
+    "id": "guild-titan",
+    "name": "泰坦要塞",
+    "level": 10,
+    "presidentId": "hero-3",
+    "vicePresidentIds": [
+      "hero-9"
+    ],
+    "members": [
+      {
+        "heroId": "hero-3",
+        "heroName": "王磊",
+        "role": "president",
+        "joinDate": 1754881375049,
+        "contribution": 186200
+      },
+      {
+        "heroId": "hero-9",
+        "heroName": "马超",
+        "role": "vice",
+        "joinDate": 1759201375049,
+        "contribution": 112500
+      },
+      {
+        "heroId": "hero-10",
+        "heroName": "何刚",
+        "role": "member",
+        "joinDate": 1772161375049,
+        "contribution": 68900
+      }
+    ],
+    "buildings": [
+      {
+        "id": "training-room",
+        "name": "训练室",
+        "type": "training",
+        "level": 6,
+        "maxLevel": 10,
+        "description": "供公会成员进行战斗训练的场所",
+        "effect": "成员获得经验值+15%",
+        "upgradeCost": 50000,
+        "icon": "🏋️"
+      },
+      {
+        "id": "intelligence-center",
+        "name": "情报中心",
+        "type": "intelligence",
+        "level": 3,
+        "maxLevel": 10,
+        "description": "收集和分析城市各处的情报",
+        "effect": "随机事件奖励+10%",
+        "upgradeCost": 80000,
+        "icon": "📡"
+      },
+      {
+        "id": "armory",
+        "name": "武器库",
+        "type": "armory",
+        "level": 7,
+        "maxLevel": 10,
+        "description": "存放和维护公会武器装备的地方",
+        "effect": "装备耐久度消耗-20%",
+        "upgradeCost": 120000,
+        "icon": "⚔️"
+      }
+    ],
+    "controlledDistricts": [
+      "industrial-district"
+    ],
+    "totalPower": 28300
+  }
+]

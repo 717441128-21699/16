@@ -1,0 +1,18 @@
+[
+  {
+    "id": "war-001",
+    "districtId": "residential-district",
+    "districtName": "住宅区",
+    "attackerGuildId": "guild-titan",
+    "attackerGuildName": "泰坦要塞",
+    "defenderGuildId": "guild-justice",
+    "defenderGuildName": "正义联盟",
+    "attackerPower": 45800,
+    "defenderPower": 38500,
+    "startTime": 1780797775049,
+    "endTime": 1780808575049,
+    "attackerScore": 1250,
+    "defenderScore": 1080,
+    "status": "ongoing"
+  }
+]

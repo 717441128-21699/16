@@ -1,0 +1,79 @@
+[
+  {
+    "id": "basic-suit",
+    "name": "基础战衣",
+    "rarity": "common",
+    "defense": 10,
+    "energyBonus": 0,
+    "speedBonus": 0,
+    "icon": "👕"
+  },
+  {
+    "id": "reinforced-suit",
+    "name": "强化战衣",
+    "rarity": "common",
+    "defense": 20,
+    "energyBonus": 5,
+    "speedBonus": 0,
+    "icon": "🦺"
+  },
+  {
+    "id": "speed-suit",
+    "name": "疾行战衣",
+    "rarity": "rare",
+    "defense": 15,
+    "energyBonus": 10,
+    "speedBonus": 20,
+    "icon": "🥋"
+  },
+  {
+    "id": "arcane-suit",
+    "name": "奥术战衣",
+    "rarity": "rare",
+    "defense": 25,
+    "energyBonus": 30,
+    "speedBonus": 5,
+    "specialEffect": "能量消耗降低10%",
+    "icon": "🧙"
+  },
+  {
+    "id": "titan-suit",
+    "name": "泰坦战衣",
+    "rarity": "epic",
+    "defense": 50,
+    "energyBonus": 20,
+    "speedBonus": 10,
+    "specialEffect": "受到致命伤害时有20%几率免死",
+    "icon": "🛡️"
+  },
+  {
+    "id": "phantom-suit",
+    "name": "幻影战衣",
+    "rarity": "epic",
+    "defense": 35,
+    "energyBonus": 40,
+    "speedBonus": 30,
+    "specialEffect": "攻击有15%几率造成双倍伤害",
+    "icon": "🌑"
+  },
+  {
+    "id": "quantum-suit",
+    "name": "量子战衣",
+    "rarity": "legendary",
+    "defense": 80,
+    "energyBonus": 60,
+    "speedBonus": 40,
+    "specialEffect": "每秒恢复5点能量",
+    "icon": "⚛️"
+  },
+  {
+    "id": "celestial-suit",
+    "name": "天神战衣",
+    "rarity": "legendary",
+    "defense": 100,
+    "energyBonus": 80,
+    "speedBonus": 50,
+    "specialEffect": "全属性+15%",
+    "icon": "👑"
+  }
+]

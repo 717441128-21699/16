@@ -1,27 +1,60 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Radio, ShieldAlert, AlertTriangle, X, Search, Swords } from 'lucide-react';
+import { MapPin, Radio, ShieldAlert, AlertTriangle, X, Search, Swords, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TechCard, GlowButton, StatCard } from '@/components/ui';
 import { DistrictCard } from '@/components/city/DistrictCard';
 import { EventCard } from '@/components/city/EventCard';
 import { Heatmap } from '@/components/city/Heatmap';
 import { useCityStore } from '@/store/useCityStore';
+import { useHeroStore } from '@/store/useHeroStore';
+import { api } from '@/lib/api';
 import type { District } from '@/data/city';
 
 export default function CityMap() {
   const navigate = useNavigate();
-  const { districts, activeEvents, triggerRandomEvent, updateDistrictStats } = useCityStore();
+  const { districts, activeEvents, triggerEventAsync, fetchDistricts, fetchEvents, updateDistrictStats, loading: cityLoading } = useCityStore();
+  const { currentHero, heroList } = useHeroStore();
   const [selectedDistrict, setSelectedDistrict] = useState<District | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [triggering, setTriggering] = useState(false);
+
+  const hero = currentHero ?? heroList[0];
 
   useEffect(() => {
-    if (activeEvents.length === 0) {
-      triggerRandomEvent();
-      triggerRandomEvent();
+    const loadData = async () => {
+      try {
+        await Promise.all([
+          fetchDistricts(),
+          fetchEvents(),
+        ]);
+      } catch (error) {
+        console.error('加载城市数据失败:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [fetchDistricts, fetchEvents]);
+
+  useEffect(() => {
+    if (!loading && activeEvents.length === 0) {
+      handleTriggerEvent();
     }
-  }, []);
+  }, [loading, activeEvents.length]);
+
+  const handleTriggerEvent = async () => {
+    setTriggering(true);
+    try {
+      await triggerEventAsync();
+    } catch (error) {
+      console.error('触发事件失败:', error);
+    } finally {
+      setTriggering(false);
+    }
+  };
 
   const handlePatrol = (district: District) => {
     setIsScanning(true);
@@ -32,23 +65,47 @@ export default function CityMap() {
         activity: Math.min(100, district.activity + 2),
       });
       if (Math.random() > 0.5) {
-        triggerRandomEvent();
+        handleTriggerEvent();
       }
       setIsScanning(false);
     }, 1500);
   };
 
-  const handleAcceptMission = () => {
-    navigate('/battle');
+  const handleAcceptMission = async (eventId: string) => {
+    if (!hero) {
+      navigate('/hero-create');
+      return;
+    }
+    try {
+      await api.joinEvent(eventId, hero.id);
+      navigate('/battle');
+    } catch (error) {
+      console.error('接取任务失败:', error);
+    }
   };
 
   const getDistrictEvents = (districtId: string) => {
     return activeEvents.filter((e) => e.districtId === districtId);
   };
 
-  const avgCrimeRate = Math.round(districts.reduce((sum, d) => sum + d.crimeRate, 0) / districts.length);
-  const avgSatisfaction = Math.round(districts.reduce((sum, d) => sum + d.satisfaction, 0) / districts.length);
+  const avgCrimeRate = districts.length > 0
+    ? Math.round(districts.reduce((sum, d) => sum + d.crimeRate, 0) / districts.length)
+    : 0;
+  const avgSatisfaction = districts.length > 0
+    ? Math.round(districts.reduce((sum, d) => sum + d.satisfaction, 0) / districts.length)
+    : 0;
   const totalPopulation = districts.reduce((sum, d) => sum + d.population, 0);
+
+  if (loading || cityLoading) {
+    return (
+      <div className="min-h-screen p-6 flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mb-4" />
+          <p className="text-scifi-muted">加载城市数据中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-6">
@@ -141,10 +198,15 @@ export default function CityMap() {
                 <GlowButton
                   size="sm"
                   variant="primary"
-                  onClick={() => triggerRandomEvent()}
+                  onClick={handleTriggerEvent}
+                  disabled={triggering}
                 >
-                  <Radio className="w-4 h-4" />
-                  扫描事件
+                  {triggering ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Radio className="w-4 h-4" />
+                  )}
+                  {triggering ? '扫描中...' : '扫描事件'}
                 </GlowButton>
               </div>
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
@@ -161,7 +223,7 @@ export default function CityMap() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.08 }}
                     >
-                      <EventCard event={event} onAccept={handleAcceptMission} />
+                      <EventCard event={event} onAccept={() => handleAcceptMission(event.id)} />
                     </motion.div>
                   ))
                 )}
@@ -175,7 +237,8 @@ export default function CityMap() {
                     variant="primary"
                     size="lg"
                     className="w-full"
-                    onClick={handleAcceptMission}
+                    onClick={() => handleAcceptMission(activeEvents[0]?.id ?? '')}
+                    disabled={activeEvents.length === 0}
                   >
                     <Swords className="w-5 h-5" />
                     进入战斗训练
@@ -187,7 +250,11 @@ export default function CityMap() {
                     onClick={() => setIsScanning(true)}
                     disabled={isScanning}
                   >
-                    <Search className="w-5 h-5" />
+                    {isScanning ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Search className="w-5 h-5" />
+                    )}
                     {isScanning ? '扫描中...' : '全城扫描'}
                   </GlowButton>
                 </div>
@@ -259,13 +326,24 @@ export default function CityMap() {
                   onClick={() => handlePatrol(selectedDistrict)}
                   disabled={isScanning}
                 >
-                  <Radio className="w-4 h-4" />
+                  {isScanning ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Radio className="w-4 h-4" />
+                  )}
                   {isScanning ? '巡逻中...' : '开始巡逻'}
                 </GlowButton>
                 <GlowButton
                   variant="danger"
                   className="flex-1"
-                  onClick={handleAcceptMission}
+                  onClick={() => {
+                    const districtEvent = getDistrictEvents(selectedDistrict.id)[0];
+                    if (districtEvent) {
+                      handleAcceptMission(districtEvent.id);
+                    } else {
+                      handleAcceptMission(activeEvents[0]?.id ?? '');
+                    }
+                  }}
                 >
                   <Swords className="w-4 h-4" />
                   前往支援
@@ -279,7 +357,7 @@ export default function CityMap() {
                     <EventCard
                       key={event.instanceId}
                       event={event}
-                      onAccept={handleAcceptMission}
+                      onAccept={() => handleAcceptMission(event.id)}
                       compact
                     />
                   ))}

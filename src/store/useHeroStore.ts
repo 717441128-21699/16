@@ -1,18 +1,29 @@
 import { create } from 'zustand';
 import type { Hero } from '../data/heroes';
 import { sampleHeroes } from '../data/heroes';
+import { api } from '../lib/api';
+import { adaptHero, adaptHeroes } from '../lib/adapters';
 
 interface HeroState {
   currentHero: Hero | null;
   heroList: Hero[];
+  loading: boolean;
+  error: string | null;
 }
 
 interface HeroActions {
+  fetchHeroes: () => Promise<void>;
+  fetchCurrentHero: (id: string) => Promise<void>;
+  createHeroAsync: (hero: Omit<Hero, 'id'>) => Promise<void>;
+  updateHeroAsync: (id: string, updates: Partial<Hero>) => Promise<void>;
+  addExpAsync: (id: string, exp: number) => Promise<void>;
   createHero: (hero: Omit<Hero, 'id'>) => void;
   updateHero: (id: string, updates: Partial<Hero>) => void;
   addExp: (id: string, exp: number) => void;
   takeDamage: (id: string, damage: number) => void;
   recoverEnergy: (id: string, amount: number) => void;
+  setError: (error: string | null) => void;
+  setLoading: (loading: boolean) => void;
 }
 
 const levelUp = (hero: Hero): Hero => {
@@ -30,9 +41,111 @@ const levelUp = (hero: Hero): Hero => {
   return { ...hero, level, exp, maxExp, maxHp, maxEnergy, attack, defense, speed, hp: maxHp, energy: maxEnergy };
 };
 
-export const useHeroStore = create<HeroState & HeroActions>((set) => ({
-  currentHero: sampleHeroes[0] ?? null,
-  heroList: sampleHeroes,
+export const useHeroStore = create<HeroState & HeroActions>((set, get) => ({
+  currentHero: null,
+  heroList: [],
+  loading: false,
+  error: null,
+
+  setError: (error) => set({ error }),
+  setLoading: (loading) => set({ loading }),
+
+  fetchHeroes: async () => {
+    set({ loading: true, error: null });
+    try {
+      const heroes = await api.getHeroes();
+      const transformedHeroes = adaptHeroes(heroes as any[]);
+      const finalHeroes = transformedHeroes.length > 0 ? transformedHeroes : sampleHeroes;
+      const currentHero = finalHeroes[0] ?? null;
+      set({ heroList: finalHeroes, currentHero, loading: false });
+    } catch (error) {
+      set({
+        heroList: sampleHeroes,
+        currentHero: sampleHeroes[0] ?? null,
+        error: error instanceof Error ? error.message : '获取英雄列表失败',
+        loading: false,
+      });
+    }
+  },
+
+  fetchCurrentHero: async (id: string) => {
+    set({ loading: true, error: null });
+    try {
+      const hero = await api.getHero(id);
+      set({
+        currentHero: adaptHero(hero),
+        loading: false,
+      });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '获取英雄详情失败',
+        loading: false,
+      });
+    }
+  },
+
+  createHeroAsync: async (hero) => {
+    set({ loading: true, error: null });
+    try {
+      const newHero = await api.createHero(hero);
+      const adapted = adaptHero(newHero);
+      set((state) => ({
+        heroList: [...state.heroList, adapted],
+        currentHero: state.currentHero ?? adapted,
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '创建英雄失败',
+        loading: false,
+      });
+    }
+  },
+
+  updateHeroAsync: async (id, updates) => {
+    set({ loading: true, error: null });
+    try {
+      const updatedHero = await api.updateHero(id, updates);
+      const adapted = adaptHero(updatedHero);
+      set((state) => ({
+        heroList: state.heroList.map((h) =>
+          h.id === id ? adapted : h
+        ),
+        currentHero:
+          state.currentHero?.id === id
+            ? adapted
+            : state.currentHero,
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '更新英雄失败',
+        loading: false,
+      });
+    }
+  },
+
+  addExpAsync: async (id, exp) => {
+    set({ loading: true, error: null });
+    try {
+      const updatedHero = await api.addHeroExp(id, exp);
+      const adapted = adaptHero(updatedHero);
+      const leveledHero = levelUp(adapted);
+      set((state) => ({
+        heroList: state.heroList.map((h) =>
+          h.id === id ? leveledHero : h
+        ),
+        currentHero:
+          state.currentHero?.id === id ? leveledHero : state.currentHero,
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '添加经验失败',
+        loading: false,
+      });
+    }
+  },
 
   createHero: (hero) =>
     set((state) => {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ArrowRight,
   Zap,
+  Loader2,
 } from 'lucide-react';
 import { PowerSelector } from '@/components/hero/PowerSelector';
 import { SuitSelector } from '@/components/hero/SuitSelector';
@@ -19,7 +20,8 @@ import { PowerRadar, type HeroStatsData } from '@/components/hero/PowerRadar';
 import { HeroCard } from '@/components/hero/HeroCard';
 import { TechCard, GlowButton } from '@/components/ui';
 import { useHeroStore } from '@/store/useHeroStore';
-import { superPowers, suits, weapons, type Hero } from '@/data/heroes';
+import { api } from '@/lib/api';
+import { type Hero, type SuperPower, type Suit, type Weapon } from '@/data/heroes';
 import { cn } from '@/lib/utils';
 import { AppLayout } from '@/components/layout';
 
@@ -43,9 +45,16 @@ const avatars = ['🦸', '🦸‍♂️', '🦸‍♀️', '🦹', '🦹‍♂�
 
 function HeroCreatePage() {
   const navigate = useNavigate();
-  const createHero = useHeroStore((s) => s.createHero);
+  const createHeroAsync = useHeroStore((s) => s.createHeroAsync);
+  const fetchHeroes = useHeroStore((s) => s.fetchHeroes);
   const [currentStep, setCurrentStep] = useState<StepId>('basic');
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
+
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [powers, setPowers] = useState<SuperPower[]>([]);
+  const [suits, setSuits] = useState<Suit[]>([]);
+  const [weapons, setWeapons] = useState<Weapon[]>([]);
 
   const [heroName, setHeroName] = useState('');
   const [heroAlias, setHeroAlias] = useState('');
@@ -53,6 +62,26 @@ function HeroCreatePage() {
   const [selectedPowers, setSelectedPowers] = useState<string[]>([]);
   const [selectedSuitId, setSelectedSuitId] = useState<string | null>(null);
   const [selectedWeaponId, setSelectedWeaponId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [powersData, suitsData, weaponsData] = await Promise.all([
+          api.getPowers(),
+          api.getSuits(),
+          api.getWeapons(),
+        ]);
+        setPowers(powersData as SuperPower[]);
+        setSuits(suitsData as Suit[]);
+        setWeapons(weaponsData as Weapon[]);
+      } catch (error) {
+        console.error('加载数据失败:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   const computedStats = useMemo<HeroStatsData>(() => {
     let attack = 50;
@@ -63,7 +92,7 @@ function HeroCreatePage() {
     let cooldownReduction = 0;
 
     selectedPowers.forEach((id) => {
-      const power = superPowers.find((p) => p.id === id);
+      const power = powers.find((p) => p.id === id);
       if (power) {
         attack += power.damage;
         energy += Math.floor(power.energyCost * 0.5);
@@ -98,7 +127,7 @@ function HeroCreatePage() {
       health: Math.min(health, 200),
       cooldownReduction: Math.min(cooldownReduction, 100),
     };
-  }, [selectedPowers, selectedSuitId, selectedWeaponId]);
+  }, [selectedPowers, selectedSuitId, selectedWeaponId, powers, suits, weapons]);
 
   const previewHero: Hero = useMemo(() => {
     return {
@@ -119,6 +148,8 @@ function HeroCreatePage() {
       powers: selectedPowers,
       suitId: selectedSuitId ?? 'basic-suit',
       weaponId: selectedWeaponId ?? 'fists',
+      gold: 0,
+      reputation: 0,
     };
   }, [heroName, heroAlias, selectedAvatar, computedStats, selectedPowers, selectedSuitId, selectedWeaponId]);
 
@@ -153,27 +184,37 @@ function HeroCreatePage() {
     }
   };
 
-  const handleCreateHero = () => {
-    const newHero: Omit<Hero, 'id'> = {
-      name: heroName,
-      alias: heroAlias,
-      avatar: selectedAvatar,
-      level: 1,
-      exp: 0,
-      maxExp: 1000,
-      hp: previewHero.maxHp,
-      maxHp: previewHero.maxHp,
-      energy: previewHero.maxEnergy,
-      maxEnergy: previewHero.maxEnergy,
-      attack: computedStats.attack,
-      defense: computedStats.defense,
-      speed: computedStats.speed,
-      powers: selectedPowers,
-      suitId: selectedSuitId ?? 'basic-suit',
-      weaponId: selectedWeaponId ?? 'fists',
-    };
-    createHero(newHero);
-    navigate('/hero-manage');
+  const handleCreateHero = async () => {
+    setSubmitting(true);
+    try {
+      const newHero: Omit<Hero, 'id'> = {
+        name: heroName,
+        alias: heroAlias,
+        avatar: selectedAvatar,
+        level: 1,
+        exp: 0,
+        maxExp: 1000,
+        hp: previewHero.maxHp,
+        maxHp: previewHero.maxHp,
+        energy: previewHero.maxEnergy,
+        maxEnergy: previewHero.maxEnergy,
+        attack: computedStats.attack,
+        defense: computedStats.defense,
+        speed: computedStats.speed,
+        powers: selectedPowers,
+        suitId: selectedSuitId ?? 'basic-suit',
+        weaponId: selectedWeaponId ?? 'fists',
+        gold: 1000,
+        reputation: 0,
+      };
+      await createHeroAsync(newHero);
+      await fetchHeroes();
+      navigate('/hero-manage');
+    } catch (error) {
+      console.error('创建英雄失败:', error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const stepVariants = {
@@ -191,7 +232,18 @@ function HeroCreatePage() {
     }),
   };
 
+  const renderLoading = () => (
+    <div className="flex flex-col items-center justify-center py-20">
+      <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mb-4" />
+      <p className="text-scifi-muted">加载数据中...</p>
+    </div>
+  );
+
   const renderStepContent = () => {
+    if (loading) {
+      return renderLoading();
+    }
+
     switch (currentStep) {
       case 'basic':
         return (
@@ -281,6 +333,7 @@ function HeroCreatePage() {
               selectedIds={selectedPowers}
               onChange={setSelectedPowers}
               maxSelect={3}
+              powers={powers}
             />
           </motion.div>
         );
@@ -296,7 +349,7 @@ function HeroCreatePage() {
             exit="exit"
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
-            <SuitSelector selectedId={selectedSuitId} onChange={setSelectedSuitId} />
+            <SuitSelector selectedId={selectedSuitId} onChange={setSelectedSuitId} suits={suits} />
           </motion.div>
         );
 
@@ -311,7 +364,7 @@ function HeroCreatePage() {
             exit="exit"
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
-            <WeaponSelector selectedId={selectedWeaponId} onChange={setSelectedWeaponId} />
+            <WeaponSelector selectedId={selectedWeaponId} onChange={setSelectedWeaponId} weapons={weapons} />
           </motion.div>
         );
 
@@ -369,9 +422,14 @@ function HeroCreatePage() {
                     size="lg"
                     className="w-full"
                     onClick={handleCreateHero}
+                    disabled={submitting}
                   >
-                    <Zap className="w-4 h-4" />
-                    确认创建英雄
+                    {submitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Zap className="w-4 h-4" />
+                    )}
+                    {submitting ? '创建中...' : '确认创建英雄'}
                   </GlowButton>
                 </TechCard>
               </div>
@@ -416,7 +474,7 @@ function HeroCreatePage() {
                       <motion.div
                         whileHover={isCompleted ? { scale: 1.1 } : {}}
                         onClick={() =>
-                          isCompleted && setCurrentStep(step.id)
+                          isCompleted && !loading && setCurrentStep(step.id)
                         }
                         className={cn(
                           'relative w-12 h-12 rounded-xl flex items-center justify-center border transition-all duration-300',
@@ -485,41 +543,45 @@ function HeroCreatePage() {
                   {renderStepContent()}
                 </AnimatePresence>
 
-                <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/5">
-                  <GlowButton
-                    variant="ghost"
-                    onClick={goPrev}
-                    disabled={currentStepIndex === 0}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    上一步
-                  </GlowButton>
-
-                  {currentStepIndex < steps.length - 1 ? (
+                {!loading && (
+                  <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/5">
                     <GlowButton
-                      variant="primary"
-                      onClick={goNext}
-                      disabled={!canProceed()}
+                      variant="ghost"
+                      onClick={goPrev}
+                      disabled={currentStepIndex === 0 || submitting}
                     >
-                      下一步
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronLeft className="w-4 h-4" />
+                      上一步
                     </GlowButton>
-                  ) : null}
-                </div>
+
+                    {currentStepIndex < steps.length - 1 ? (
+                      <GlowButton
+                        variant="primary"
+                        onClick={goNext}
+                        disabled={!canProceed() || submitting}
+                      >
+                        下一步
+                        <ChevronRight className="w-4 h-4" />
+                      </GlowButton>
+                    ) : null}
+                  </div>
+                )}
               </TechCard>
             </div>
 
-            <div className="space-y-4">
-              <motion.div
-                key={`preview-${currentStep}`}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3 }}
-                className="sticky top-6"
-              >
-                <PowerRadar stats={computedStats} title="实时战力分析" size={300} />
-              </motion.div>
-            </div>
+            {!loading && (
+              <div className="space-y-4">
+                <motion.div
+                  key={`preview-${currentStep}`}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="sticky top-6"
+                >
+                  <PowerRadar stats={computedStats} title="实时战力分析" size={300} />
+                </motion.div>
+              </div>
+            )}
           </div>
         </div>
       </div>

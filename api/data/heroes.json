@@ -1,0 +1,240 @@
+[
+  {
+    "id": "hero-1",
+    "name": "陈光明",
+    "title": "曙光",
+    "faction": "justice",
+    "level": 15,
+    "exp": 3500,
+    "powers": [
+      {
+        "id": "flight",
+        "name": "飞行",
+        "icon": "✈️",
+        "description": "自由翱翔于天际，获得高空视野",
+        "attack": 20,
+        "defense": 5,
+        "speed": 5,
+        "cooldownModifier": 0.25
+      },
+      {
+        "id": "super-strength",
+        "name": "超级力量",
+        "icon": "💪",
+        "description": "拥有超乎常人的力量，可举起重物",
+        "attack": 50,
+        "defense": 5,
+        "speed": 5,
+        "cooldownModifier": 0.16666666666666666
+      }
+    ],
+    "suit": {
+      "id": "titan-suit",
+      "name": "泰坦战衣",
+      "rarity": "epic",
+      "defense": 50,
+      "energyBonus": 20,
+      "healthBonus": 10,
+      "color": "#A855F7"
+    },
+    "weapon": {
+      "id": "plasma-blade",
+      "name": "等离子之刃",
+      "type": "energy",
+      "rarity": "epic",
+      "damage": 80,
+      "attackSpeed": 1.2,
+      "criticalChance": 0.1
+    },
+    "health": 850,
+    "maxHealth": 1000,
+    "energy": 70,
+    "maxEnergy": 100,
+    "combatPower": 6212,
+    "cooldownEfficiency": 0.51875,
+    "reputation": 0,
+    "gold": 1000,
+    "skills": []
+  },
+  {
+    "id": "hero-2",
+    "name": "林雪",
+    "title": "幽影",
+    "faction": "justice",
+    "level": 12,
+    "exp": 2200,
+    "powers": [
+      {
+        "id": "super-speed",
+        "name": "超级速度",
+        "icon": "⚡",
+        "description": "移动速度大幅提升，难以被击中",
+        "attack": 35,
+        "defense": 5,
+        "speed": 5,
+        "cooldownModifier": 0.2
+      },
+      {
+        "id": "telepathy",
+        "name": "心灵感应",
+        "icon": "🧠",
+        "description": "读取敌人思想，预测其行动",
+        "attack": 25,
+        "defense": 5,
+        "speed": 5,
+        "cooldownModifier": 0.14285714285714285
+      },
+      {
+        "id": "invisibility",
+        "name": "隐身",
+        "icon": "👻",
+        "description": "使自身隐形，躲避敌人侦查",
+        "attack": 15,
+        "defense": 5,
+        "speed": 5,
+        "cooldownModifier": 0.125
+      }
+    ],
+    "suit": {
+      "id": "phantom-suit",
+      "name": "幻影战衣",
+      "rarity": "epic",
+      "defense": 35,
+      "energyBonus": 40,
+      "healthBonus": 30,
+      "color": "#A855F7"
+    },
+    "weapon": {
+      "id": "katana",
+      "name": "武士刀",
+      "type": "melee",
+      "rarity": "rare",
+      "damage": 35,
+      "attackSpeed": 1.8,
+      "criticalChance": 0.1
+    },
+    "health": 600,
+    "maxHealth": 800,
+    "energy": 95,
+    "maxEnergy": 120,
+    "combatPower": 3528,
+    "cooldownEfficiency": 0.51,
+    "reputation": 0,
+    "gold": 1000,
+    "skills": []
+  },
+  {
+    "id": "hero-3",
+    "name": "王磊",
+    "title": "磐石",
+    "faction": "justice",
+    "level": 18,
+    "exp": 6000,
+    "powers": [
+      {
+        "id": "super-strength",
+        "name": "超级力量",
+        "icon": "💪",
+        "description": "拥有超乎常人的力量，可举起重物",
+        "attack": 50,
+        "defense": 5,
+        "speed": 5,
+        "cooldownModifier": 0.16666666666666666
+      },
+      {
+        "id": "regeneration",
+        "name": "再生",
+        "icon": "💚",
+        "description": "快速恢复受伤的身体组织",
+        "attack": 10,
+        "defense": 5,
+        "speed": 5,
+        "cooldownModifier": 0.09090909090909091
+      }
+    ],
+    "suit": {
+      "id": "celestial-suit",
+      "name": "天神战衣",
+      "rarity": "legendary",
+      "defense": 100,
+      "energyBonus": 80,
+      "healthBonus": 50,
+      "color": "#FFC93C"
+    },
+    "weapon": {
+      "id": "gauntlet-of-power",
+      "name": "力量手套",
+      "type": "energy",
+      "rarity": "legendary",
+      "damage": 150,
+      "attackSpeed": 0.8,
+      "criticalChance": 0.1
+    },
+    "health": 1500,
+    "maxHealth": 1500,
+    "energy": 50,
+    "maxEnergy": 80,
+    "combatPower": 15679,
+    "cooldownEfficiency": 0.5918181818181819,
+    "reputation": 0,
+    "gold": 1000,
+    "skills": []
+  },
+  {
+    "name": "测试英雄",
+    "title": "测试侠",
+    "faction": "justice",
+    "level": 1,
+    "exp": 0,
+    "powers": [
+      {
+        "id": "flight",
+        "name": "飞行",
+        "icon": "✈️",
+        "description": "自由翱翔于天际，获得高空视野",
+        "attack": 20,
+        "defense": 5,
+        "speed": 5,
+        "cooldownModifier": 0.25
+      },
+      {
+        "id": "super-strength",
+        "name": "超级力量",
+        "icon": "💪",
+        "description": "拥有超乎常人的力量，可举起重物",
+        "attack": 50,
+        "defense": 5,
+        "speed": 5,
+        "cooldownModifier": 0.16666666666666666
+      }
+    ],
+    "suit": {
+      "id": "titan-suit",
+      "name": "泰坦战衣",
+      "rarity": "epic",
+      "defense": 50,
+      "energyBonus": 20,
+      "healthBonus": 10,
+      "color": "#A855F7"
+    },
+    "weapon": {
+      "id": "plasma-blade",
+      "name": "等离子之刃",
+      "type": "energy",
+      "rarity": "epic",
+      "damage": 80,
+      "attackSpeed": 1.2,
+      "criticalChance": 0.1
+    },
+    "health": 600,
+    "maxHealth": 600,
+    "energy": 85,
+    "maxEnergy": 85,
+    "combatPower": 2588,
+    "cooldownEfficiency": 0.58875,
+    "reputation": 0,
+    "gold": 1000,
+    "skills": [],
+    "id": "heroes-1780802776960-so02oc7"
+  }
+]

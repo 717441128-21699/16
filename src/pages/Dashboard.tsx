@@ -20,6 +20,7 @@ import {
   MapPin,
   ChevronRight,
   Star,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TechCard } from '@/components/ui/TechCard';
@@ -27,9 +28,10 @@ import { StatCard } from '@/components/ui/StatCard';
 import { GlowButton } from '@/components/ui/GlowButton';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { RarityBadge } from '@/components/ui/RarityBadge';
-import { useCityStore } from '@/store/useCityStore';
+import { useCityStore, type Announcement } from '@/store/useCityStore';
 import { useHeroStore } from '@/store/useHeroStore';
-import { districts, cityEvents } from '@/data/city';
+import { useMarketStore } from '@/store/useMarketStore';
+import { cityEvents } from '@/data/city';
 import { superPowers, suits, weapons } from '@/data/heroes';
 
 interface DynamicEvent {
@@ -42,7 +44,7 @@ interface DynamicEvent {
 
 const quickEntries = [
   { key: 'hero-create', label: '英雄创建', icon: Sparkles, color: 'cyan', path: '/hero-create' },
-  { key: 'mission', label: '执行任务', icon: Swords, color: 'red', path: '/city-map' },
+  { key: 'mission', label: '执行任务', icon: Swords, color: 'red', path: '/city' },
   { key: 'market', label: '交易市场', icon: ShoppingBag, color: 'purple', path: '/market' },
   { key: 'guild', label: '公会大厅', icon: Building2, color: 'green', path: '/guild' },
 ];
@@ -55,14 +57,27 @@ const districtColors: Record<string, string> = {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+
   const currentHero = useHeroStore((s) => s.currentHero);
   const heroList = useHeroStore((s) => s.heroList);
+  const heroLoading = useHeroStore((s) => s.loading);
+  const fetchHeroes = useHeroStore((s) => s.fetchHeroes);
+
   const districts = useCityStore((s) => s.districts);
-  const announcements = useCityStore((s) => s.announcements);
-  const triggerRandomEvent = useCityStore((s) => s.triggerRandomEvent);
+  const cityAnnouncements = useCityStore((s) => s.announcements);
+  const activeEvents = useCityStore((s) => s.activeEvents);
+  const cityLoading = useCityStore((s) => s.loading);
+  const fetchDistricts = useCityStore((s) => s.fetchDistricts);
+  const fetchEvents = useCityStore((s) => s.fetchEvents);
+  const fetchAnnouncements = useCityStore((s) => s.fetchAnnouncements);
+
+  const marketItems = useMarketStore((s) => s.items);
+  const marketLoading = useMarketStore((s) => s.loading);
+  const fetchItems = useMarketStore((s) => s.fetchItems);
 
   const [dynamicEvents, setDynamicEvents] = useState<DynamicEvent[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -70,37 +85,45 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    const loadData = async () => {
+      setInitialLoading(true);
+      await Promise.all([
+        fetchHeroes(),
+        fetchDistricts(),
+        fetchEvents(),
+        fetchAnnouncements(),
+        fetchItems(),
+      ]);
+      setInitialLoading(false);
+    };
+    loadData();
+  }, [fetchHeroes, fetchDistricts, fetchEvents, fetchAnnouncements, fetchItems]);
+
+  useEffect(() => {
     const initialEvents: DynamicEvent[] = [
-      {
-        id: 'evt-1',
-        type: 'announcement',
+      ...cityAnnouncements.slice(0, 2).map((ann: Announcement) => ({
+        id: ann.id,
+        type: 'announcement' as const,
         icon: '📢',
-        message: '[系统公告] 新版本 v2.3.0 已上线，新增街区争夺战玩法！',
-        timestamp: Date.now() - 120000,
-      },
-      {
-        id: 'evt-2',
-        type: 'trade',
-        icon: '💰',
-        message: '玩家「幽影」成功出售 量子战衣蓝图，成交价 ¥58,000',
-        timestamp: Date.now() - 60000,
-      },
-      {
-        id: 'evt-3',
-        type: 'event',
-        icon: '🚨',
-        message: '工业区发生帮派火拼事件，急需英雄支援！',
-        timestamp: Date.now() - 30000,
-      },
+        message: ann.content,
+        timestamp: ann.timestamp,
+      })),
+      ...activeEvents.slice(0, 2).map((evt) => ({
+        id: evt.instanceId,
+        type: 'event' as const,
+        icon: evt.icon,
+        message: `${evt.name}！${evt.description}`,
+        timestamp: evt.triggeredAt,
+      })),
     ];
     setDynamicEvents(initialEvents);
-  }, []);
+  }, [cityAnnouncements, activeEvents]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       const eventTypes: DynamicEvent['type'][] = ['event', 'announcement', 'trade'];
       const randomType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
-      
+
       let newEvent: DynamicEvent;
       if (randomType === 'event') {
         const randomCityEvent = cityEvents[Math.floor(Math.random() * cityEvents.length)];
@@ -114,7 +137,9 @@ export default function Dashboard() {
       } else if (randomType === 'trade') {
         const heroNames = heroList.map((h) => h.alias);
         const randomName = heroNames[Math.floor(Math.random() * heroNames.length)] || '神秘英雄';
-        const items = ['等离子之刃', '泰坦战衣', '奥术法杖', '虚空之弓'];
+        const items = marketItems.length > 0
+          ? marketItems.map((m) => m.name)
+          : ['等离子之刃', '泰坦战衣', '奥术法杖', '虚空之弓'];
         const randomItem = items[Math.floor(Math.random() * items.length)];
         const price = Math.floor(Math.random() * 90000) + 10000;
         newEvent = {
@@ -125,29 +150,35 @@ export default function Dashboard() {
           timestamp: Date.now(),
         };
       } else {
-        const annMessages = [
-          '本周双倍经验活动开启，快来参与！',
-          '新英雄「雷霆」已加入英雄池，快去召唤吧！',
-          '公会战报名即将截止，请会长尽快确认！',
-          '周末限定礼包已上架，限时抢购！',
-        ];
+        const annMessages = cityAnnouncements.length > 0
+          ? cityAnnouncements.map((a) => a.content)
+          : [
+              '本周双倍经验活动开启，快来参与！',
+              '新英雄「雷霆」已加入英雄池，快去召唤吧！',
+              '公会战报名即将截止，请会长尽快确认！',
+              '周末限定礼包已上架，限时抢购！',
+            ];
         newEvent = {
           id: `evt-${Date.now()}`,
           type: 'announcement',
           icon: '📢',
-          message: `[系统公告] ${annMessages[Math.floor(Math.random() * annMessages.length)]}`,
+          message: annMessages[Math.floor(Math.random() * annMessages.length)],
           timestamp: Date.now(),
         };
       }
-      
+
       setDynamicEvents((prev) => [newEvent, ...prev].slice(0, 20));
     }, 8000);
 
     return () => clearInterval(interval);
-  }, [heroList]);
+  }, [heroList, marketItems, cityAnnouncements]);
 
-  const avgCrimeRate = Math.round(districts.reduce((sum, d) => sum + d.crimeRate, 0) / districts.length);
-  const avgSatisfaction = Math.round(districts.reduce((sum, d) => sum + d.satisfaction, 0) / districts.length);
+  const avgCrimeRate = districts.length > 0
+    ? Math.round(districts.reduce((sum, d) => sum + d.crimeRate, 0) / districts.length)
+    : 0;
+  const avgSatisfaction = districts.length > 0
+    ? Math.round(districts.reduce((sum, d) => sum + d.satisfaction, 0) / districts.length)
+    : 0;
   const safetyScore = Math.max(0, 100 - avgCrimeRate);
 
   const heroSuit = currentHero ? suits.find((s) => s.id === currentHero.suitId) : null;
@@ -167,6 +198,19 @@ export default function Dashboard() {
   const formatTime = (d: Date) => d.toLocaleTimeString('zh-CN', { hour12: false });
   const formatDate = (d: Date) => d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
 
+  const isLoading = initialLoading || heroLoading || cityLoading || marketLoading;
+
+  if (isLoading && districts.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 text-cyan-400 animate-spin" />
+          <p className="text-sm text-scifi-muted">正在加载数据...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen p-6 space-y-6">
       <motion.div
@@ -182,6 +226,7 @@ export default function Dashboard() {
             {currentHero && (
               <span className="text-2xl">{currentHero.avatar}</span>
             )}
+            {heroLoading && <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />}
           </div>
           <p className="text-sm text-scifi-muted">
             {formatDate(currentTime)} · {formatTime(currentTime)} · 星城守护系统 v2.3.0
@@ -219,6 +264,7 @@ export default function Dashboard() {
         <h2 className="font-display text-sm font-semibold text-scifi-text uppercase tracking-wider mb-3 flex items-center gap-2">
           <MapPin className="w-4 h-4 text-cyan-400" />
           城市概览
+          {cityLoading && <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {districts.map((district, idx) => {
@@ -291,6 +337,7 @@ export default function Dashboard() {
             <h2 className="font-display text-sm font-semibold text-scifi-text uppercase tracking-wider mb-3 flex items-center gap-2">
               <Zap className="w-4 h-4 text-yellow-400" />
               英雄状态
+              {heroLoading && <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />}
             </h2>
             {currentHero ? (
               <TechCard glow={false} className="p-5">

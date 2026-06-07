@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Target, Users, Heart, Zap, Trophy, Swords, Shield, Star } from 'lucide-react';
+import { Clock, Target, Users, Heart, Zap, Trophy, Swords, Shield, Star, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TechCard, GlowButton, ProgressBar } from '@/components/ui';
 import { SkillBar } from '@/components/battle/SkillBar';
@@ -9,7 +9,10 @@ import { BattleLog, type BattleLogEntry } from '@/components/battle/BattleLog';
 import { EnemyCard, type EnemyData } from '@/components/battle/EnemyCard';
 import { TeamPanel } from '@/components/battle/TeamPanel';
 import { useHeroStore } from '@/store/useHeroStore';
+import { useBattleStore } from '@/store/useBattleStore';
+import { useCityStore } from '@/store/useCityStore';
 import { superPowers, sampleHeroes, type SuperPower } from '@/data/heroes';
+import type { BattleState as TypesBattleState } from '../types';
 
 type EnemyType = EnemyData['type'];
 
@@ -37,14 +40,25 @@ function generateEnemies(count: number): EnemyData[] {
 
 export default function Battle() {
   const navigate = useNavigate();
-  const { currentHero, recoverEnergy, takeDamage } = useHeroStore();
+  const location = useLocation();
+  const { currentHero, heroList } = useHeroStore();
+  const {
+    serverBattleState,
+    startBattleAsync,
+    useSkillAsync,
+    tickBattleAsync,
+    loading: battleLoading,
+  } = useBattleStore();
+  const { activeEvents } = useCityStore();
+
+  const hero = currentHero ?? heroList[0];
 
   const [battleTime, setBattleTime] = useState(0);
   const [teamworkScore, setTeamworkScore] = useState(75);
   const [enemies, setEnemies] = useState<EnemyData[]>(() => generateEnemies(3));
   const [targetedEnemy, setTargetedEnemy] = useState<string | null>(null);
-  const [heroHp, setHeroHp] = useState(currentHero?.hp ?? 1000);
-  const [heroEnergy, setHeroEnergy] = useState(currentHero?.energy ?? 100);
+  const [heroHp, setHeroHp] = useState(hero?.hp ?? 1000);
+  const [heroEnergy, setHeroEnergy] = useState(hero?.energy ?? 100);
   const [logs, setLogs] = useState<BattleLogEntry[]>([]);
   const [damageEffectId, setDamageEffectId] = useState<string | null>(null);
   const [isBattleOver, setIsBattleOver] = useState(false);
@@ -56,6 +70,9 @@ export default function Battle() {
     kills: 0,
     rescues: 0,
   });
+  const [loading, setLoading] = useState(true);
+  const [battleId, setBattleId] = useState<string | null>(null);
+  const [usingSkill, setUsingSkill] = useState(false);
 
   const logIdRef = useRef(0);
 
@@ -71,131 +88,161 @@ export default function Battle() {
   }, []);
 
   useEffect(() => {
-    addLog('info', `战斗开始！检测到 ${enemies.length} 个敌人`);
-    addLog('info', `${currentHero?.alias ?? '英雄'} 进入战场`);
-  }, []);
+    const initBattle = async () => {
+      if (!hero) {
+        navigate('/hero-create');
+        return;
+      }
+
+      try {
+        const eventId = activeEvents[0]?.id ?? 'default-event';
+        await startBattleAsync(hero.id, eventId);
+        const state = useBattleStore.getState().serverBattleState as TypesBattleState;
+        if (state) {
+          setBattleId(state.id);
+          if (state.enemies && state.enemies.length > 0) {
+            const mappedEnemies: EnemyData[] = state.enemies.map((e, idx) => ({
+              id: e.id,
+              name: e.name,
+              hp: e.health,
+              maxHp: e.maxHealth,
+              damage: e.damage,
+              type: (enemyTemplates[idx % enemyTemplates.length]?.type) ?? 'robot',
+              icon: enemyTemplates[idx % enemyTemplates.length]?.icon,
+            }));
+            setEnemies(mappedEnemies);
+          }
+          if (state.logs) {
+            const mappedLogs: BattleLogEntry[] = state.logs.map((log, idx) => ({
+              id: `log-server-${idx}`,
+              timestamp: log.timestamp,
+              type: log.type as BattleLogEntry['type'],
+              message: log.message,
+              value: log.value,
+            }));
+            setLogs(mappedLogs);
+          }
+        }
+        addLog('info', `战斗开始！检测到 ${enemies.length} 个敌人`);
+        addLog('info', `${hero.alias ?? '英雄'} 进入战场`);
+      } catch (error) {
+        console.error('初始化战斗失败:', error);
+        addLog('info', '战斗已开始');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initBattle();
+  }, [hero, navigate, startBattleAsync, activeEvents, addLog, enemies.length]);
 
   useEffect(() => {
-    if (isBattleOver) return;
+    if (isBattleOver || loading) return;
 
     const timer = setInterval(() => {
       setBattleTime((t) => t + 1);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isBattleOver]);
+  }, [isBattleOver, loading]);
 
   useEffect(() => {
-    if (isBattleOver) return;
+    if (isBattleOver || loading || !battleId) return;
 
-    const battleInterval = setInterval(() => {
-      setEnemies((prevEnemies) => {
-        const aliveEnemies = prevEnemies.filter((e) => e.hp > 0);
-        if (aliveEnemies.length === 0) return prevEnemies;
-
-        setStats((prev) => {
-          const autoDamage = 15 + Math.floor(Math.random() * 20);
-          const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-
-          setEnemies((enemies) =>
-            enemies.map((e) => {
-              if (e.id === target.id) {
-                const newHp = Math.max(0, e.hp - autoDamage);
-                if (newHp === 0 && e.hp > 0) {
-                  addLog('kill', `${currentHero?.alias ?? '英雄'} 击败了 ${e.name}！`);
-                  setStats((s) => ({ ...s, kills: s.kills + 1, totalDamage: s.totalDamage + autoDamage }));
-                } else {
-                  addLog('damage', `${currentHero?.alias ?? '英雄'} 攻击 ${e.name}`, autoDamage);
-                  setStats((s) => ({ ...s, totalDamage: s.totalDamage + autoDamage }));
+    const battleInterval = setInterval(async () => {
+      try {
+        await tickBattleAsync(battleId);
+        const state = useBattleStore.getState().serverBattleState as TypesBattleState;
+        
+        if (state && state.enemies) {
+          setEnemies((prev) =>
+            prev.map((e) => {
+              const serverEnemy = state.enemies.find((se) => se.id === e.id);
+              if (serverEnemy) {
+                const newHp = Math.max(0, serverEnemy.health);
+                if (newHp < e.hp) {
                   setDamageEffectId(e.id);
                   setTimeout(() => setDamageEffectId(null), 400);
+                }
+                if (newHp === 0 && e.hp > 0) {
+                  addLog('kill', `${hero?.alias ?? '英雄'} 击败了 ${e.name}！`);
+                  setStats((s) => ({ ...s, kills: s.kills + 1 }));
                 }
                 return { ...e, hp: newHp };
               }
               return e;
             }),
           );
-          return prev;
-        });
-
-        const attackingEnemy = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-        if (attackingEnemy) {
-          const enemyDamage = attackingEnemy.damage + Math.floor(Math.random() * 10);
-          setHeroHp((hp) => {
-            const newHp = Math.max(0, hp - enemyDamage);
-            addLog('damage', `${attackingEnemy.name} 攻击 ${currentHero?.alias ?? '英雄'}`, enemyDamage);
-            takeDamage(currentHero?.id ?? '', enemyDamage);
-            return newHp;
-          });
         }
 
-        setHeroEnergy((e) => {
-          const newEnergy = Math.min(currentHero?.maxEnergy ?? 100, e + 3);
-          recoverEnergy(currentHero?.id ?? '', 3);
-          return newEnergy;
-        });
+        if (state && state.logs && state.logs.length > 0) {
+          const latestLogs = state.logs.slice(-3);
+          latestLogs.forEach((log, idx) => {
+            const logEntry: BattleLogEntry = {
+              id: `log-tick-${Date.now()}-${idx}`,
+              timestamp: log.timestamp,
+              type: log.type as BattleLogEntry['type'],
+              message: log.message,
+              value: log.value,
+            };
+            setLogs((prev) => {
+              if (prev.some((l) => l.message === log.message && l.timestamp === log.timestamp)) {
+                return prev;
+              }
+              return [...prev, logEntry];
+            });
+          });
+        }
+      } catch (error) {
+        console.error('战斗tick失败:', error);
+      }
 
-        setTeamworkScore((s) => Math.min(100, s + Math.floor(Math.random() * 3) - 1));
-
-        return prevEnemies;
-      });
+      setHeroEnergy((e) => Math.min(hero?.maxEnergy ?? 100, e + 3));
+      setTeamworkScore((s) => Math.min(100, s + Math.floor(Math.random() * 3) - 1));
     }, 2000);
 
     return () => clearInterval(battleInterval);
-  }, [isBattleOver, currentHero, addLog, takeDamage, recoverEnergy]);
+  }, [isBattleOver, loading, battleId, tickBattleAsync, hero, addLog]);
 
   useEffect(() => {
     const aliveEnemies = enemies.filter((e) => e.hp > 0);
-    if (aliveEnemies.length === 0 && enemies.length > 0 && !isBattleOver) {
+    if (aliveEnemies.length === 0 && enemies.length > 0 && !isBattleOver && !loading) {
       setIsBattleOver(true);
       setBattleResult('victory');
       addLog('info', '🎉 所有敌人已被击败！');
     }
-    if (heroHp <= 0 && !isBattleOver) {
+    if (heroHp <= 0 && !isBattleOver && !loading) {
       setIsBattleOver(true);
       setBattleResult('defeat');
       addLog('info', '💀 英雄倒下了...');
     }
-  }, [enemies, heroHp, isBattleOver, addLog]);
+  }, [enemies, heroHp, isBattleOver, loading, addLog]);
 
-  const handleUseSkill = useCallback((skill: SuperPower) => {
-    if (isBattleOver) return;
+  const handleUseSkill = useCallback(async (skill: SuperPower) => {
+    if (isBattleOver || usingSkill) return;
     if (heroEnergy < skill.energyCost) {
       addLog('info', '能量不足！');
       return;
     }
+    if (!battleId) return;
 
     const aliveEnemies = enemies.filter((e) => e.hp > 0);
     if (aliveEnemies.length === 0) return;
 
     const targetId = targetedEnemy ?? aliveEnemies[0].id;
+    setUsingSkill(true);
     setHeroEnergy((e) => e - skill.energyCost);
 
-    if (skill.damage > 0) {
-      setEnemies((prev) =>
-        prev.map((enemy) => {
-          if (enemy.id !== targetId) return enemy;
-          const damage = skill.damage + Math.floor(Math.random() * 20);
-          const newHp = Math.max(0, enemy.hp - damage);
-          if (newHp === 0 && enemy.hp > 0) {
-            addLog('kill', `技能【${skill.name}】击败了 ${enemy.name}！`);
-            setStats((s) => ({ ...s, kills: s.kills + 1, totalDamage: s.totalDamage + damage }));
-          } else {
-            addLog('skill', `${currentHero?.alias ?? '英雄'} 使用【${skill.name}】攻击 ${enemy.name}`, damage);
-            setStats((s) => ({ ...s, totalDamage: s.totalDamage + damage, skillUses: s.skillUses + 1 }));
-          }
-          setDamageEffectId(enemy.id);
-          setTimeout(() => setDamageEffectId(null), 400);
-          return { ...enemy, hp: newHp };
-        }),
-      );
-    } else {
-      const healAmount = 50 + Math.floor(Math.random() * 30);
-      setHeroHp((hp) => Math.min(currentHero?.maxHp ?? 1000, hp + healAmount));
-      addLog('heal', `技能【${skill.name}】恢复了生命`, healAmount);
-      setStats((s) => ({ ...s, totalHeal: s.totalHeal + healAmount, skillUses: s.skillUses + 1 }));
+    try {
+      await useSkillAsync(battleId, skill.id, targetId);
+      addLog('skill', `${hero?.alias ?? '英雄'} 使用【${skill.name}】`);
+      setStats((s) => ({ ...s, skillUses: s.skillUses + 1 }));
+    } catch (error) {
+      console.error('使用技能失败:', error);
+    } finally {
+      setUsingSkill(false);
     }
-  }, [isBattleOver, heroEnergy, enemies, targetedEnemy, currentHero, addLog]);
+  }, [isBattleOver, usingSkill, heroEnergy, battleId, enemies, targetedEnemy, hero, useSkillAsync, addLog]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -218,6 +265,17 @@ export default function Battle() {
       },
     });
   };
+
+  if (loading || battleLoading) {
+    return (
+      <div className="min-h-screen p-4 grid-bg flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mb-4" />
+          <p className="text-scifi-muted">初始化战斗中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-4 grid-bg">
@@ -292,16 +350,16 @@ export default function Battle() {
                     clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)',
                   }}
                 >
-                  {currentHero?.avatar ?? '🦸'}
+                  {hero?.avatar ?? '🦸'}
                   <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-scifi-panel border border-white/20 text-[10px] font-bold font-mono text-cyan-400">
-                    Lv.{currentHero?.level ?? 1}
+                    Lv.{hero?.level ?? 1}
                   </div>
                 </motion.div>
 
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-display text-lg font-semibold text-scifi-text">
-                      {currentHero?.alias ?? '英雄'}
+                      {hero?.alias ?? '英雄'}
                     </span>
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-1">
@@ -318,20 +376,20 @@ export default function Battle() {
                   <div className="flex items-center gap-2">
                     <Heart className="w-4 h-4 text-red-400 flex-shrink-0" />
                     <div className="flex-1">
-                      <ProgressBar value={heroHp} max={currentHero?.maxHp ?? 1000} color="red" height={6} />
+                      <ProgressBar value={heroHp} max={hero?.maxHp ?? 1000} color="red" height={6} />
                     </div>
                     <span className="text-xs font-mono text-scifi-muted w-24 text-right">
-                      {heroHp} / {currentHero?.maxHp ?? 1000}
+                      {heroHp} / {hero?.maxHp ?? 1000}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <Zap className="w-4 h-4 text-yellow-400 flex-shrink-0" />
                     <div className="flex-1">
-                      <ProgressBar value={heroEnergy} max={currentHero?.maxEnergy ?? 100} color="yellow" height={6} />
+                      <ProgressBar value={heroEnergy} max={hero?.maxEnergy ?? 100} color="yellow" height={6} />
                     </div>
                     <span className="text-xs font-mono text-scifi-muted w-24 text-right">
-                      {heroEnergy} / {currentHero?.maxEnergy ?? 100}
+                      {heroEnergy} / {hero?.maxEnergy ?? 100}
                     </span>
                   </div>
                 </div>
@@ -342,7 +400,7 @@ export default function Battle() {
                   skills={heroSkills}
                   currentEnergy={heroEnergy}
                   onUseSkill={handleUseSkill}
-                  disabled={isBattleOver}
+                  disabled={isBattleOver || usingSkill}
                 />
               </div>
             </TechCard>

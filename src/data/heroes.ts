@@ -52,6 +52,8 @@ export interface Hero {
   suitId: string;
   weaponId: string;
   avatar: string;
+  gold: number;
+  reputation: number;
 }
 
 export const superPowers: SuperPower[] = [
@@ -318,6 +320,8 @@ export const sampleHeroes: Hero[] = [
     suitId: 'titan-suit',
     weaponId: 'plasma-blade',
     avatar: '🦸',
+    gold: 128450,
+    reputation: 7820,
   },
   {
     id: 'hero-2',
@@ -337,6 +341,8 @@ export const sampleHeroes: Hero[] = [
     suitId: 'phantom-suit',
     weaponId: 'katana',
     avatar: '🦸‍♀️',
+    gold: 95200,
+    reputation: 5430,
   },
   {
     id: 'hero-3',
@@ -356,5 +362,7 @@ export const sampleHeroes: Hero[] = [
     suitId: 'celestial-suit',
     weaponId: 'gauntlet-of-power',
     avatar: '🧔',
+    gold: 215800,
+    reputation: 12650,
   },
 ];

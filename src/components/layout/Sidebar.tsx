@@ -22,9 +22,9 @@ const navItems: NavItem[] = [
   { to: "/", label: "主控台", icon: LayoutDashboard },
   { to: "/hero-create", label: "英雄创建", icon: Sparkles },
   { to: "/hero-manage", label: "英雄管理", icon: Users },
-  { to: "/city-map", label: "城市地图", icon: Map },
+  { to: "/city", label: "城市地图", icon: Map },
   { to: "/market", label: "交易市场", icon: ShoppingBag },
-  { to: "/security", label: "安全报告", icon: ShieldAlert },
+  { to: "/report", label: "安全报告", icon: ShieldAlert },
   { to: "/rankings", label: "排行榜", icon: Trophy },
   { to: "/guild", label: "公会大厅", icon: Building2 },
 ];

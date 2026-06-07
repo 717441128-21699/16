@@ -17,13 +17,13 @@ export default function App() {
       <AppLayout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/city-map" element={<CityMap />} />
+          <Route path="/city" element={<CityMap />} />
           <Route path="/battle" element={<Battle />} />
           <Route path="/battle-result" element={<BattleResult />} />
           <Route path="/hero-create" element={<HeroCreate />} />
           <Route path="/hero-manage" element={<HeroManage />} />
           <Route path="/market" element={<Market />} />
-          <Route path="/security" element={<Report />} />
+          <Route path="/report" element={<Report />} />
           <Route path="/rankings" element={<Rankings />} />
           <Route path="/guild" element={<Guild />} />
           <Route path="*" element={<Navigate to="/" replace />} />

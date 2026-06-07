@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import type { BattleState as TypesBattleState } from '../types';
+import { api } from '../lib/api';
 
 export interface BattleLog {
   id: string;
@@ -28,14 +30,23 @@ export interface BattleState {
   isInBattle: boolean;
   round: number;
   result: 'ongoing' | 'victory' | 'defeat' | null;
+  loading: boolean;
+  error: string | null;
+  serverBattleState: TypesBattleState | null;
 }
 
 interface BattleActions {
+  startBattleAsync: (heroId: string, eventId: string) => Promise<void>;
+  useSkillAsync: (battleId: string, skillId: string, targetId: string) => Promise<void>;
+  tickBattleAsync: (battleId: string) => Promise<void>;
+  endBattleAsync: (battleId: string, result: 'victory' | 'defeat') => Promise<void>;
   startBattle: (player: Combatant, enemy: Combatant) => void;
   useSkill: (skillName: string, damage: number, energyCost: number) => void;
   takeDamage: (target: 'player' | 'enemy', damage: number) => void;
   endBattle: (result: 'victory' | 'defeat') => void;
   addLog: (message: string, type: BattleLog['type']) => void;
+  setError: (error: string | null) => void;
+  setLoading: (loading: boolean) => void;
 }
 
 export const useBattleStore = create<BattleState & BattleActions>((set, get) => ({
@@ -46,6 +57,69 @@ export const useBattleStore = create<BattleState & BattleActions>((set, get) => 
   isInBattle: false,
   round: 1,
   result: null,
+  loading: false,
+  error: null,
+  serverBattleState: null,
+
+  setError: (error) => set({ error }),
+  setLoading: (loading) => set({ loading }),
+
+  startBattleAsync: async (heroId: string, eventId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const battleState = await api.startBattle(heroId, eventId);
+      set({ serverBattleState: battleState, loading: false, isInBattle: true, result: null });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '开始战斗失败',
+        loading: false,
+      });
+    }
+  },
+
+  useSkillAsync: async (battleId: string, skillId: string, targetId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const battleState = await api.useBattleSkill(battleId, skillId, targetId);
+      set({ serverBattleState: battleState, loading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '使用技能失败',
+        loading: false,
+      });
+    }
+  },
+
+  tickBattleAsync: async (battleId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const battleState = await api.battleTick(battleId);
+      set({ serverBattleState: battleState, loading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '战斗推进失败',
+        loading: false,
+      });
+    }
+  },
+
+  endBattleAsync: async (battleId: string, result: 'victory' | 'defeat') => {
+    set({ loading: true, error: null });
+    try {
+      const battleState = await api.endBattle(battleId, result);
+      set({
+        serverBattleState: battleState,
+        loading: false,
+        isInBattle: false,
+        result,
+      });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '结束战斗失败',
+        loading: false,
+      });
+    }
+  },
 
   startBattle: (player, enemy) =>
     set({

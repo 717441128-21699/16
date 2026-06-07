@@ -1,13 +1,14 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shirt, Shield, Zap, Wind, Sparkles } from 'lucide-react';
-import { suits, type Suit, type Rarity } from '@/data/heroes';
+import { suits as defaultSuits, type Suit, type Rarity } from '@/data/heroes';
 import { TechCard, RarityBadge } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 interface SuitSelectorProps {
   selectedId: string | null;
   onChange: (id: string) => void;
+  suits?: Suit[];
 }
 
 const rarityOrder: Rarity[] = ['common', 'rare', 'epic', 'legendary'];
@@ -26,12 +27,13 @@ const borderColorMap: Record<Rarity, 'cyan' | 'purple' | 'pink' | 'yellow'> = {
   legendary: 'yellow',
 };
 
-export function SuitSelector({ selectedId, onChange }: SuitSelectorProps) {
+export function SuitSelector({ selectedId, onChange, suits }: SuitSelectorProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<Rarity | 'all'>('all');
+  const suitList = suits ?? defaultSuits;
 
   const groupedSuits = useMemo(() => {
-    const filtered = activeFilter === 'all' ? suits : suits.filter((s) => s.rarity === activeFilter);
+    const filtered = activeFilter === 'all' ? suitList : suitList.filter((s) => s.rarity === activeFilter);
     return rarityOrder
       .map((rarity) => ({
         rarity,

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "fists",
+    "name": "徒手",
+    "type": "melee",
+    "rarity": "common",
+    "attack": 5,
+    "attackSpeed": 2,
+    "range": 1,
+    "icon": "✊"
+  },
+  {
+    "id": "baton",
+    "name": "警棍",
+    "type": "melee",
+    "rarity": "common",
+    "attack": 15,
+    "attackSpeed": 1.5,
+    "range": 2,
+    "icon": "🔨"
+  },
+  {
+    "id": "pistol",
+    "name": "手枪",
+    "type": "ranged",
+    "rarity": "common",
+    "attack": 20,
+    "attackSpeed": 1,
+    "range": 10,
+    "icon": "🔫"
+  },
+  {
+    "id": "katana",
+    "name": "武士刀",
+    "type": "melee",
+    "rarity": "rare",
+    "attack": 35,
+    "attackSpeed": 1.8,
+    "range": 2,
+    "specialEffect": "流血伤害",
+    "icon": "⚔️"
+  },
+  {
+    "id": "sniper-rifle",
+    "name": "狙击步枪",
+    "type": "ranged",
+    "rarity": "rare",
+    "attack": 60,
+    "attackSpeed": 0.5,
+    "range": 50,
+    "specialEffect": "暴击率+20%",
+    "icon": "🎯"
+  },
+  {
+    "id": "plasma-blade",
+    "name": "等离子之刃",
+    "type": "energy",
+    "rarity": "epic",
+    "attack": 80,
+    "attackSpeed": 1.2,
+    "range": 3,
+    "specialEffect": "无视30%防御",
+    "icon": "🗡️"
+  },
+  {
+    "id": "arcane-staff",
+    "name": "奥术法杖",
+    "type": "energy",
+    "rarity": "epic",
+    "attack": 70,
+    "attackSpeed": 1,
+    "range": 20,
+    "specialEffect": "范围伤害",
+    "icon": "🪄"
+  },
+  {
+    "id": "gauntlet-of-power",
+    "name": "力量手套",
+    "type": "energy",
+    "rarity": "legendary",
+    "attack": 150,
+    "attackSpeed": 0.8,
+    "range": 5,
+    "specialEffect": "攻击附带击退效果",
+    "icon": "🧤"
+  },
+  {
+    "id": "void-bow",
+    "name": "虚空之弓",
+    "type": "ranged",
+    "rarity": "legendary",
+    "attack": 120,
+    "attackSpeed": 1.5,
+    "range": 100,
+    "specialEffect": "箭矢穿透多个目标",
+    "icon": "🏹"
+  }
+]

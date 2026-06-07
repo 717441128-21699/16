@@ -1,24 +1,138 @@
 import { create } from 'zustand';
 import type { Guild, GuildRank, DistrictWar } from '../data/guild';
-import { sampleGuilds, sampleWar } from '../data/guild';
+import { api } from '../lib/api';
+import { adaptGuild, adaptGuilds, adaptDistrictWar, adaptDistrictWars } from '../lib/adapters';
 
 interface GuildState {
   currentGuild: Guild | null;
   wars: DistrictWar[];
+  loading: boolean;
+  error: string | null;
 }
 
 interface GuildActions {
+  fetchGuilds: () => Promise<Guild[]>;
+  fetchGuildAsync: (id: string) => Promise<void>;
+  promoteMemberAsync: (guildId: string, heroId: string, role: GuildRank) => Promise<void>;
+  upgradeBuildingAsync: (guildId: string, buildingId: string) => Promise<void>;
+  declareWarAsync: (data: Record<string, unknown>) => Promise<void>;
+  fetchWarsAsync: () => Promise<void>;
   upgradeBuilding: (buildingId: string) => void;
   promoteMember: (memberId: string, newRank: GuildRank) => void;
   declareWar: (districtId: string, districtName: string, defenderGuildId: string, defenderGuildName: string) => void;
   endWar: (warId: string, winner: string) => void;
+  setError: (error: string | null) => void;
+  setLoading: (loading: boolean) => void;
 }
 
 const rankOrder: GuildRank[] = ['recruit', 'member', 'officer', 'leader'];
 
 export const useGuildStore = create<GuildState & GuildActions>((set, get) => ({
-  currentGuild: sampleGuilds[0] ?? null,
-  wars: [sampleWar],
+  currentGuild: null,
+  wars: [],
+  loading: false,
+  error: null,
+
+  setError: (error) => set({ error }),
+  setLoading: (loading) => set({ loading }),
+
+  fetchGuilds: async () => {
+    set({ loading: true, error: null });
+    try {
+      const guilds = await api.getGuilds();
+      const adapted = adaptGuilds(guilds as any[]);
+      set({ loading: false });
+      return adapted;
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '获取公会列表失败',
+        loading: false,
+      });
+      return [];
+    }
+  },
+
+  fetchGuildAsync: async (id: string) => {
+    set({ loading: true, error: null });
+    try {
+      const guild = await api.getGuild(id);
+      set({ currentGuild: adaptGuild(guild), loading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '获取公会详情失败',
+        loading: false,
+      });
+    }
+  },
+
+  promoteMemberAsync: async (guildId: string, heroId: string, role: GuildRank) => {
+    set({ loading: true, error: null });
+    try {
+      const updatedGuild = await api.promoteMember(guildId, heroId, role);
+      set((state) => ({
+        currentGuild:
+          state.currentGuild?.id === guildId
+            ? adaptGuild(updatedGuild)
+            : state.currentGuild,
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '晋升成员失败',
+        loading: false,
+      });
+    }
+  },
+
+  upgradeBuildingAsync: async (guildId: string, buildingId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const updatedGuild = await api.upgradeBuilding(guildId, buildingId);
+      set((state) => ({
+        currentGuild:
+          state.currentGuild?.id === guildId
+            ? adaptGuild(updatedGuild)
+            : state.currentGuild,
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '升级建筑失败',
+        loading: false,
+      });
+    }
+  },
+
+  declareWarAsync: async (data: Record<string, unknown>) => {
+    set({ loading: true, error: null });
+    try {
+      const newWar = await api.declareWar(data);
+      const adapted = adaptDistrictWar(newWar);
+      set((state) => ({
+        wars: [...state.wars, adapted],
+        loading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '宣战失败',
+        loading: false,
+      });
+    }
+  },
+
+  fetchWarsAsync: async () => {
+    set({ loading: true, error: null });
+    try {
+      const wars = await api.getWars();
+      const adapted = adaptDistrictWars(wars as any[]);
+      set({ wars: adapted, loading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : '获取战争列表失败',
+        loading: false,
+      });
+    }
+  },
 
   upgradeBuilding: (buildingId) =>
     set((state) => {

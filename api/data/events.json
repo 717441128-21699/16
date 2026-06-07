@@ -1,0 +1,92 @@
+[
+  {
+    "id": "bank-robbery",
+    "type": "robbery",
+    "name": "银行劫案",
+    "description": "一伙武装歹徒正在抢劫金融区的中央银行",
+    "severity": 3,
+    "districtId": "financial-district",
+    "reward": {
+      "exp": 500,
+      "gold": 2000,
+      "reputation": 50
+    },
+    "participants": [],
+    "status": "active"
+  },
+  {
+    "id": "alien-invasion",
+    "type": "alien-invasion",
+    "name": "外星入侵",
+    "description": "不明外星生物在工业区降落，正在攻击市民",
+    "severity": 5,
+    "districtId": "industrial-district",
+    "reward": {
+      "exp": 2000,
+      "gold": 8000,
+      "reputation": 200
+    },
+    "participants": [],
+    "status": "active"
+  },
+  {
+    "id": "warehouse-fire",
+    "type": "fire",
+    "name": "仓库火灾",
+    "description": "工业区大型仓库发生火灾，火势正在蔓延",
+    "severity": 4,
+    "districtId": "residential-district",
+    "reward": {
+      "exp": 800,
+      "gold": 3000,
+      "reputation": 80
+    },
+    "participants": [],
+    "status": "active"
+  },
+  {
+    "id": "gang-warfare",
+    "type": "gang-war",
+    "name": "帮派火拼",
+    "description": "两大黑帮在工业区交界地带展开激烈交火",
+    "severity": 4,
+    "districtId": "financial-district",
+    "reward": {
+      "exp": 1000,
+      "gold": 4000,
+      "reputation": 100
+    },
+    "participants": [],
+    "status": "active"
+  },
+  {
+    "id": "hostage-situation",
+    "type": "hostage",
+    "name": "人质事件",
+    "description": "恐怖分子在住宅区购物中心劫持了多名人质",
+    "severity": 5,
+    "districtId": "industrial-district",
+    "reward": {
+      "exp": 1500,
+      "gold": 6000,
+      "reputation": 150
+    },
+    "participants": [],
+    "status": "active"
+  },
+  {
+    "id": "earthquake",
+    "type": "disaster",
+    "name": "地震灾害",
+    "description": "城市发生里氏5.8级地震，多处建筑受损",
+    "severity": 3,
+    "districtId": "residential-district",
+    "reward": {
+      "exp": 600,
+      "gold": 2500,
+      "reputation": 60
+    },
+    "participants": [],
+    "status": "active"
+  }
+]

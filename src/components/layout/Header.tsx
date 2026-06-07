@@ -9,19 +9,26 @@ import {
   ChevronDown,
   User,
   Megaphone,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const announcements = [
-  "【系统公告】新英雄「雷霆之翼」已上线，快来体验吧！",
-  "【活动通知】周末双倍经验活动开启，持续至周日24:00",
-  "【紧急警报】东区出现异常能量波动，请英雄们前往支援",
-  "【市场动态】传说品质装备「永恒战甲」已上架交易市场",
-];
+import { useHeroStore } from "@/store/useHeroStore";
+import { useCityStore } from "@/store/useCityStore";
 
 export function Header() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [announcementIndex, setAnnouncementIndex] = useState(0);
+
+  const currentHero = useHeroStore((s) => s.currentHero);
+  const heroLoading = useHeroStore((s) => s.loading);
+  const fetchHeroes = useHeroStore((s) => s.fetchHeroes);
+  const announcements = useCityStore((s) => s.announcements);
+  const fetchAnnouncements = useCityStore((s) => s.fetchAnnouncements);
+
+  useEffect(() => {
+    fetchHeroes();
+    fetchAnnouncements();
+  }, [fetchHeroes, fetchAnnouncements]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -31,11 +38,12 @@ export function Header() {
   }, []);
 
   useEffect(() => {
+    if (announcements.length === 0) return;
     const timer = setInterval(() => {
       setAnnouncementIndex((prev) => (prev + 1) % announcements.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [announcements.length]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("zh-CN", {
@@ -54,6 +62,9 @@ export function Header() {
       weekday: "short",
     });
   };
+
+  const gold = currentHero?.gold ?? 0;
+  const reputation = currentHero?.reputation ?? 0;
 
   return (
     <header className="h-16 fixed top-0 left-64 right-0 glass border-b border-scifi-border z-20 flex items-center justify-between px-6">
@@ -81,16 +92,20 @@ export function Header() {
               </span>
             </div>
             <div className="flex-1 overflow-hidden relative px-3">
-              <motion.div
-                key={announcementIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="whitespace-nowrap text-xs text-scifi-text truncate"
-              >
-                {announcements[announcementIndex]}
-              </motion.div>
+              {announcements.length > 0 ? (
+                <motion.div
+                  key={announcementIndex}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="whitespace-nowrap text-xs text-scifi-text truncate"
+                >
+                  {announcements[announcementIndex]?.content}
+                </motion.div>
+              ) : (
+                <span className="text-xs text-scifi-muted">暂无公告</span>
+              )}
             </div>
           </div>
         </div>
@@ -103,9 +118,13 @@ export function Header() {
             className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-yellow-500/10 border border-yellow-400/20 cursor-pointer transition-colors hover:bg-yellow-500/15"
           >
             <Coins className="w-4 h-4 text-yellow-400" />
-            <span className="text-sm font-semibold text-yellow-300">
-              128,450
-            </span>
+            {heroLoading ? (
+              <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
+            ) : (
+              <span className="text-sm font-semibold text-yellow-300">
+                {gold.toLocaleString()}
+              </span>
+            )}
           </motion.div>
 
           <motion.div
@@ -113,9 +132,13 @@ export function Header() {
             className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-purple-500/10 border border-purple-400/20 cursor-pointer transition-colors hover:bg-purple-500/15"
           >
             <Award className="w-4 h-4 text-purple-400" />
-            <span className="text-sm font-semibold text-purple-300">
-              7,820
-            </span>
+            {heroLoading ? (
+              <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+            ) : (
+              <span className="text-sm font-semibold text-purple-300">
+                {reputation.toLocaleString()}
+              </span>
+            )}
           </motion.div>
 
           <div className="flex items-center gap-2 text-scifi-muted">
@@ -144,8 +167,12 @@ export function Header() {
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 border-2 border-scifi-bg" />
           </div>
           <div className="hidden sm:block text-left leading-tight">
-            <p className="text-xs font-semibold text-scifi-text">指挥官</p>
-            <p className="text-[10px] text-scifi-muted">LV.42</p>
+            <p className="text-xs font-semibold text-scifi-text">
+              {currentHero?.alias ?? '指挥官'}
+            </p>
+            <p className="text-[10px] text-scifi-muted">
+              LV.{currentHero?.level ?? 1}
+            </p>
           </div>
           <ChevronDown
             className={cn(

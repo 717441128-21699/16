@@ -1,0 +1,167 @@
+[
+  {
+    "itemId": "bp-titan-suit",
+    "history": [
+      {
+        "date": "06-01",
+        "price": 14500
+      },
+      {
+        "date": "06-02",
+        "price": 14800
+      },
+      {
+        "date": "06-03",
+        "price": 15200
+      },
+      {
+        "date": "06-04",
+        "price": 15000
+      },
+      {
+        "date": "06-05",
+        "price": 15800
+      },
+      {
+        "date": "06-06",
+        "price": 16200
+      },
+      {
+        "date": "06-07",
+        "price": 16500
+      }
+    ]
+  },
+  {
+    "itemId": "mt-adamantine",
+    "history": [
+      {
+        "date": "06-01",
+        "price": 1900
+      },
+      {
+        "date": "06-02",
+        "price": 1950
+      },
+      {
+        "date": "06-03",
+        "price": 2100
+      },
+      {
+        "date": "06-04",
+        "price": 2050
+      },
+      {
+        "date": "06-05",
+        "price": 2000
+      },
+      {
+        "date": "06-06",
+        "price": 2150
+      },
+      {
+        "date": "06-07",
+        "price": 2200
+      }
+    ]
+  },
+  {
+    "itemId": "sb-flight-mastery",
+    "history": [
+      {
+        "date": "06-01",
+        "price": 4800
+      },
+      {
+        "date": "06-02",
+        "price": 4900
+      },
+      {
+        "date": "06-03",
+        "price": 5100
+      },
+      {
+        "date": "06-04",
+        "price": 5000
+      },
+      {
+        "date": "06-05",
+        "price": 5200
+      },
+      {
+        "date": "06-06",
+        "price": 5400
+      },
+      {
+        "date": "06-07",
+        "price": 5500
+      }
+    ]
+  },
+  {
+    "itemId": "mt-vibranium",
+    "history": [
+      {
+        "date": "06-01",
+        "price": 7500
+      },
+      {
+        "date": "06-02",
+        "price": 7800
+      },
+      {
+        "date": "06-03",
+        "price": 8200
+      },
+      {
+        "date": "06-04",
+        "price": 8000
+      },
+      {
+        "date": "06-05",
+        "price": 8500
+      },
+      {
+        "date": "06-06",
+        "price": 8800
+      },
+      {
+        "date": "06-07",
+        "price": 9000
+      }
+    ]
+  },
+  {
+    "itemId": "cs-health-potion",
+    "history": [
+      {
+        "date": "06-01",
+        "price": 480
+      },
+      {
+        "date": "06-02",
+        "price": 490
+      },
+      {
+        "date": "06-03",
+        "price": 510
+      },
+      {
+        "date": "06-04",
+        "price": 500
+      },
+      {
+        "date": "06-05",
+        "price": 520
+      },
+      {
+        "date": "06-06",
+        "price": 540
+      },
+      {
+        "date": "06-07",
+        "price": 550
+      }
+    ]
+  }
+]

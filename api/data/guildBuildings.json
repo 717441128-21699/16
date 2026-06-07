@@ -1,0 +1,35 @@
+[
+  {
+    "id": "training-room",
+    "name": "训练室",
+    "type": "training",
+    "level": 3,
+    "maxLevel": 10,
+    "description": "供公会成员进行战斗训练的场所",
+    "effect": "成员获得经验值+15%",
+    "upgradeCost": 50000,
+    "icon": "🏋️"
+  },
+  {
+    "id": "intelligence-center",
+    "name": "情报中心",
+    "type": "intelligence",
+    "level": 2,
+    "maxLevel": 10,
+    "description": "收集和分析城市各处的情报",
+    "effect": "随机事件奖励+10%",
+    "upgradeCost": 80000,
+    "icon": "📡"
+  },
+  {
+    "id": "armory",
+    "name": "武器库",
+    "type": "armory",
+    "level": 4,
+    "maxLevel": 10,
+    "description": "存放和维护公会武器装备的地方",
+    "effect": "装备耐久度消耗-20%",
+    "upgradeCost": 120000,
+    "icon": "⚔️"
+  }
+]

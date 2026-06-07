@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   Megaphone,
   X,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TechCard } from "@/components/ui/TechCard";
@@ -20,7 +21,9 @@ import { GlowButton } from "@/components/ui/GlowButton";
 import { MarketItemCard } from "@/components/market/MarketItemCard";
 import { ListItemModal } from "@/components/market/ListItemModal";
 import { useMarketStore } from "@/store/useMarketStore";
-import type { MarketItem, ItemCategory } from "@/data/market";
+import type { MarketItem as ApiMarketItem, PriceHistory as ApiPriceHistory } from "@/types";
+import type { MarketItem as DataMarketItem, ItemCategory, ItemPriceHistory } from "@/data/market";
+import { marketItems } from "@/data/market";
 
 type TabKey = "all" | "suit-blueprint" | "skill-book" | "rare-material";
 type OrderTabKey = "selling" | "sold" | "bought";
@@ -41,7 +44,65 @@ const orderTabs: { key: OrderTabKey; label: string; icon: typeof Clock }[] = [
 interface ToastItem {
   id: string;
   message: string;
-  type: "buy" | "info";
+  type: "buy" | "info" | "success" | "error";
+}
+
+const categoryMap: Record<string, ItemCategory> = {
+  blueprint: "suit-blueprint",
+  skill_book: "skill-book",
+  material: "rare-material",
+  "suit-blueprint": "suit-blueprint",
+  "skill-book": "skill-book",
+  "rare-material": "rare-material",
+  consumable: "consumable",
+  "weapon-part": "weapon-part",
+};
+
+const rarityMap: Record<string, "common" | "rare" | "epic" | "legendary"> = {
+  common: "common",
+  rare: "rare",
+  epic: "epic",
+  legendary: "legendary",
+};
+
+const iconMap: Record<string, string> = {
+  blueprint: "📜",
+  skill_book: "📕",
+  material: "💎",
+  "suit-blueprint": "📜",
+  "skill-book": "📕",
+  "rare-material": "💎",
+  consumable: "🧪",
+  "weapon-part": "⚙️",
+};
+
+function adaptMarketItem(api: ApiMarketItem): DataMarketItem {
+  const baseItem = marketItems.find((m) => m.name === api.itemName);
+  const category = categoryMap[api.itemType] ?? "rare-material";
+  return {
+    id: api.id,
+    name: api.itemName,
+    category,
+    rarity: rarityMap[api.itemRarity] ?? "common",
+    description: baseItem?.description ?? "",
+    basePrice: api.suggestedPriceMin ?? Math.floor(api.price * 0.9),
+    currentPrice: api.price,
+    stock: 1,
+    sellerId: api.sellerId,
+    sellerName: api.sellerName,
+    listedAt: api.listedAt,
+    icon: baseItem?.icon ?? iconMap[category] ?? "📦",
+  };
+}
+
+function adaptPriceHistory(api: ApiPriceHistory, itemId: string): ItemPriceHistory {
+  return {
+    itemId,
+    history: api.priceHistory.map((p) => ({
+      date: p.date,
+      price: p.price,
+    })),
+  };
 }
 
 export default function Market() {
@@ -51,11 +112,39 @@ export default function Market() {
   const [showListModal, setShowListModal] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const items = useMarketStore((s) => s.items);
-  const priceHistory = useMarketStore((s) => s.priceHistory);
+  const storeItems = useMarketStore((s) => s.items);
   const myOrders = useMarketStore((s) => s.myOrders);
-  const listItem = useMarketStore((s) => s.listItem);
-  const buyItem = useMarketStore((s) => s.buyItem);
+  const loading = useMarketStore((s) => s.loading);
+  const error = useMarketStore((s) => s.error);
+  const fetchItems = useMarketStore((s) => s.fetchItems);
+  const listItemAsync = useMarketStore((s) => s.listItemAsync);
+  const buyItemAsync = useMarketStore((s) => s.buyItemAsync);
+  const fetchOrdersAsync = useMarketStore((s) => s.fetchOrdersAsync);
+  const fetchPriceHistoryAsync = useMarketStore((s) => s.fetchPriceHistoryAsync);
+  const getPriceSuggestion = useMarketStore((s) => s.getPriceSuggestion);
+  const setError = useMarketStore((s) => s.setError);
+
+  useEffect(() => {
+    fetchItems(activeTab === "all" ? undefined : activeTab);
+    fetchOrdersAsync("hero-1");
+  }, [activeTab, fetchItems, fetchOrdersAsync]);
+
+  useEffect(() => {
+    storeItems.forEach((item) => {
+      fetchPriceHistoryAsync(item.category);
+    });
+  }, [storeItems, fetchPriceHistoryAsync]);
+
+  const items = useMemo(() => {
+    return storeItems.map((item) => {
+      if ("itemType" in item) {
+        return adaptMarketItem(item as unknown as ApiMarketItem);
+      }
+      return item as DataMarketItem;
+    });
+  }, [storeItems]);
+
+  const priceHistory = useMarketStore((s) => s.priceHistory);
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -72,7 +161,10 @@ export default function Market() {
   const totalValue = items.reduce((sum, i) => sum + i.currentPrice * i.stock, 0);
   const activeOrders = myOrders.filter((o) => o.status === "active").length;
 
-  const showToast = (message: string, type: "buy" | "info" = "info") => {
+  const showToast = (
+    message: string,
+    type: "buy" | "info" | "success" | "error" = "info",
+  ) => {
     const id = `toast-${Date.now()}`;
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
@@ -80,9 +172,12 @@ export default function Market() {
     }, 4000);
   };
 
-  const handleBuy = (item: MarketItem) => {
-    const success = buyItem(item.id, 1);
-    if (success) {
+  const handleBuy = async (item: DataMarketItem) => {
+    await buyItemAsync(item.id, "hero-1");
+    if (error) {
+      showToast(`❌ 购买失败: ${error}`, "error");
+      setError(null);
+    } else {
       showToast(
         `📢 [全服公告] 恭喜英雄成功购买 ${item.name}！交易金额 ¥${item.currentPrice.toLocaleString()}`,
         "buy",
@@ -90,7 +185,7 @@ export default function Market() {
     }
   };
 
-  const handleListConfirm = (data: {
+  const handleListConfirm = async (data: {
     itemId: string;
     itemName: string;
     category: ItemCategory;
@@ -98,21 +193,26 @@ export default function Market() {
     price: number;
     quantity: number;
   }) => {
-    const baseItem = items.find((i) => i.id === data.itemId);
-    listItem({
-      id: `listed-${Date.now()}`,
+    await listItemAsync({
+      id: data.itemId || `item-${Date.now()}`,
       name: data.itemName,
       category: data.category,
-      rarity: data.rarity as "common" | "rare" | "epic" | "legendary",
-      description: baseItem?.description ?? "",
+      rarity: data.rarity as any,
+      description: `${data.itemName} - 玩家上架`,
       basePrice: data.price,
       currentPrice: data.price,
-      icon: baseItem?.icon ?? "📦",
+      stock: data.quantity,
+      sellerId: "hero-1",
       sellerName: "当前玩家",
       listedAt: Date.now(),
-      quantity: data.quantity,
+      icon: "📦",
     });
-    showToast(`✅ 商品已成功上架：${data.itemName} x${data.quantity}`, "info");
+    if (error) {
+      showToast(`❌ 上架失败: ${error}`, "error");
+      setError(null);
+    } else {
+      showToast(`✅ 商品已成功上架：${data.itemName} x${data.quantity}`, "success");
+    }
   };
 
   return (
@@ -126,7 +226,12 @@ export default function Market() {
             英雄间的物资流通平台，安全、高效、透明
           </p>
         </div>
-        <GlowButton variant="primary" size="lg" onClick={() => setShowListModal(true)}>
+        <GlowButton
+          variant="primary"
+          size="lg"
+          onClick={() => setShowListModal(true)}
+          disabled={loading}
+        >
           <Plus className="w-4 h-4" />
           发布商品
         </GlowButton>
@@ -190,7 +295,14 @@ export default function Market() {
             </div>
           </TechCard>
 
-          {filteredItems.length > 0 ? (
+          {loading ? (
+            <TechCard className="p-12" glow={false}>
+              <div className="flex flex-col items-center justify-center text-center">
+                <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mb-3" />
+                <p className="text-sm font-medium text-scifi-text">加载商品中...</p>
+              </div>
+            </TechCard>
+          ) : filteredItems.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {filteredItems.map((item, idx) => (
                 <motion.div
@@ -246,7 +358,12 @@ export default function Market() {
             </div>
 
             <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-              {myOrders.length > 0 ? (
+              {loading ? (
+                <div className="py-8 text-center">
+                  <Loader2 className="w-6 h-6 text-purple-400 animate-spin mx-auto mb-2" />
+                  <p className="text-xs text-scifi-muted">加载订单中...</p>
+                </div>
+              ) : myOrders.length > 0 ? (
                 myOrders.map((order) => (
                   <div
                     key={order.id}
@@ -311,12 +428,22 @@ export default function Market() {
                 "pointer-events-auto relative px-4 py-3 rounded-lg border backdrop-blur-xl max-w-sm",
                 toast.type === "buy"
                   ? "bg-gradient-to-r from-yellow-500/15 to-orange-500/10 border-yellow-400/40 shadow-[0_0_30px_rgba(234,179,8,0.2)]"
-                  : "bg-scifi-panel/95 border-cyan-400/30",
+                  : toast.type === "success"
+                    ? "bg-gradient-to-r from-green-500/15 to-emerald-500/10 border-green-400/40 shadow-[0_0_30px_rgba(34,197,94,0.2)]"
+                    : toast.type === "error"
+                      ? "bg-gradient-to-r from-red-500/15 to-rose-500/10 border-red-400/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]"
+                      : "bg-scifi-panel/95 border-cyan-400/30",
               )}
             >
               <div className="flex items-start gap-3">
                 {toast.type === "buy" && (
                   <Megaphone className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5 animate-pulse" />
+                )}
+                {toast.type === "success" && (
+                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                )}
+                {toast.type === "error" && (
+                  <X className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                 )}
                 <p className="text-xs text-scifi-text leading-relaxed">{toast.message}</p>
                 <button
